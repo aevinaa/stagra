@@ -1,0 +1,6 @@
+{
+  "name": "STAGRA",
+  "description": "Stagnant Water Assessment and Growth Risk Analysis - IoT research platform with ESP32 sensor telemetry, Transformer temporal modeling, and GNN spatial risk analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
