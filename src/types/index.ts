@@ -43,12 +43,13 @@ export interface DirectSensorReading {
   id: string;
   nodeId: string;
   timestamp: string;
+
   /** Direct sensor: Temperature in Celsius (°C) */
   temperature: number;
+
   /** Direct sensor: pH value (0.00 - 14.00) */
   ph: number;
-  /** Direct sensor: Total Dissolved Solids in parts per million (ppm) */
-  tds: number;
+
   // Hardware status telemetry
   batteryVoltage: number;
   signalStrengthDbm: number;
@@ -73,7 +74,6 @@ export interface TransformerTemporalPoint {
   confidenceUpper: number;
   forecastTemp: number;
   forecastPh: number;
-  forecastTds: number;
   growthRiskClass: RiskLevel;
 }
 
@@ -133,7 +133,7 @@ export interface Alert {
   severity: 'CRITICAL' | 'WARNING' | 'INFO';
   title: string;
   message: string;
-  metricType: 'TEMPERATURE' | 'PH' | 'TDS' | 'RISK_SCORE' | 'BATTERY' | 'COMMUNICATION';
+  metricType: 'TEMPERATURE' | 'PH' | 'RISK_SCORE' | 'BATTERY' | 'COMMUNICATION';
   category?: DataCategory;
   directOrModel: 'MEASURED' | 'DERIVED' | 'PREDICTED' | 'DIRECT SENSOR' | 'MODEL-DERIVED';
   thresholdValue: string;
@@ -181,7 +181,7 @@ export interface TelemetryFilter {
 }
 
 export interface HistoricalStats {
-  parameter: 'temperature' | 'ph' | 'tds' | 'riskScore';
+  parameter: 'temperature' | 'ph' | 'riskScore';
   min: number;
   max: number;
   mean: number;
@@ -195,5 +195,4 @@ export type SimulationScenario =
   | 'SUMMER_HEATWAVE'
   | 'ALGAL_BLOOM_SURGE'
   | 'ACID_RUNOFF_EVENT'
-  | 'FERTILIZER_TDS_SPIKE'
   | 'POST_RAIN_FLUSH';

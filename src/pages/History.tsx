@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -8,20 +8,13 @@ import {
   Tooltip,
   CartesianGrid,
   Legend,
-  Brush,
 } from 'recharts';
 import { useTelemetry } from '../context/TelemetryContext';
 import { DirectVsModelBadge } from '../components/common/DirectVsModelBadge';
 import { ExportModal } from '../components/common/ExportModal';
 import {
-  Calendar,
   Download,
-  Filter,
   BarChart3,
-  Thermometer,
-  Droplet,
-  Gauge,
-  Activity,
   Table as TableIcon,
   ChevronLeft,
   ChevronRight,
@@ -32,10 +25,6 @@ import clsx from 'clsx';
 
 export const History: React.FC = () => {
   const {
-    nodes,
-    activeNode,
-    activeNodeId,
-    setActiveNodeId,
     historicalReadings,
     historicalModels,
     historicalStats,
@@ -48,14 +37,11 @@ export const History: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'chart' | 'table'>('chart');
   const [tablePage, setTablePage] = useState(1);
   const [tableSearch, setTableSearch] = useState('');
+  const [selectedParameter, setSelectedParameter] = useState<'temperature' | 'ph' | 'risk'>('temperature');
 
-  // Active parameter series visibility toggles
-  const [visibleSeries, setVisibleSeries] = useState({
-    temp: true,
-    ph: true,
-    tds: true,
-    risk: true,
-  });
+  useEffect(() => {
+    setHistoryFilter((previous) => (previous.nodeId === 'node-01' ? previous : { ...previous, nodeId: 'node-01' }));
+  }, [setHistoryFilter]);
 
   const timeRanges: Array<'1h' | '6h' | '24h' | '7d' | '30d'> = ['1h', '6h', '24h', '7d', '30d'];
 
@@ -71,7 +57,6 @@ export const History: React.FC = () => {
       formattedTimestampIST,
       temperature: reading.temperature,
       ph: reading.ph,
-      tds: reading.tds,
       riskScore: model?.riskScore || 0,
       condition: model?.waterCondition || 'Nominal',
       confidence: model?.modelConfidence || 92,
@@ -92,6 +77,22 @@ export const History: React.FC = () => {
   const itemsPerPage = 12;
   const totalPages = Math.ceil(filteredTableData.length / itemsPerPage);
   const paginatedData = filteredTableData.slice((tablePage - 1) * itemsPerPage, tablePage * itemsPerPage);
+  const summaryStats = historicalStats.filter(
+    (stat) => stat.parameter === 'temperature' || stat.parameter === 'ph' || stat.parameter === 'riskScore'
+  );
+  const trendFor = (parameter: 'temperature' | 'ph') => {
+    if (combinedData.length < 2) return 'STABLE';
+    const first = combinedData[0][parameter];
+    const last = combinedData[combinedData.length - 1][parameter];
+    const change = last - first;
+    const threshold = parameter === 'temperature' ? 0.15 : 0.03;
+    return change > threshold ? 'INCREASING' : change < -threshold ? 'DECREASING' : 'STABLE';
+  };
+  const chartConfig = {
+    temperature: { dataKey: 'temperature', title: 'Temperature Trend', category: 'MEASURED', unit: '°C', color: '#06b6d4' },
+    ph: { dataKey: 'ph', title: 'pH Trend', category: 'MEASURED', unit: 'pH', color: '#14b8a6' },
+    risk: { dataKey: 'riskScore', title: 'Degradation Risk Trend', category: 'DERIVED', unit: '/100', color: '#10b981' },
+  }[selectedParameter];
 
   return (
     <div className="space-y-6 pb-12">
@@ -104,27 +105,15 @@ export const History: React.FC = () => {
             Historical Telemetry &amp; Longitudinal Analysis
           </h2>
           <p className="text-xs text-slate-400 font-sans mt-0.5">
-            Temporal time-series logs comparing MEASURED parameters (Temp, pH, TDS) with DERIVED Degradation Risk and PREDICTED Confidence
+            Temporal records of measured Temperature and pH with derived degradation assessment and predicted confidence.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Node selector */}
-          <select
-            value={historyFilter.nodeId || activeNodeId}
-            onChange={(e) => {
-              const nid = e.target.value;
-              setActiveNodeId(nid);
-              setHistoryFilter((prev) => ({ ...prev, nodeId: nid }));
-            }}
-            className="px-3 py-1.5 rounded-lg bg-[#0d1624] border border-slate-700 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500"
-          >
-            {nodes.map((node) => (
-              <option key={node.id} value={node.id}>
-                {node.name}
-              </option>
-            ))}
-          </select>
+          <div className="px-3 py-1.5 rounded-lg bg-[#0d1624] border border-slate-700 font-mono text-xs">
+            <span className="text-cyan-300 font-bold">STG-PROTO-01</span>
+            <span className="text-slate-400 ml-2">Prototype Monitoring Node</span>
+          </div>
 
           {/* Time range filters */}
           <div className="flex items-center rounded-lg bg-[#0d1624] p-0.5 border border-slate-700 font-mono text-xs">
@@ -157,13 +146,12 @@ export const History: React.FC = () => {
 
       {/* Statistical Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {historicalStats.map((stat) => {
+        {summaryStats.map((stat) => {
           const isTemp = stat.parameter === 'temperature';
           const isPh = stat.parameter === 'ph';
-          const isTds = stat.parameter === 'tds';
           const isRisk = stat.parameter === 'riskScore';
 
-          const title = isTemp ? 'Temperature' : isPh ? 'pH Level' : isTds ? 'Total Dissolved Solids' : 'Degradation Risk';
+          const title = isTemp ? 'Temperature' : isPh ? 'pH' : 'Degradation Risk';
           const badgeType = isRisk ? 'DERIVED' : 'MEASURED';
           const categoryLabel = isRisk ? 'DERIVED' : 'MEASURED';
 
@@ -202,6 +190,12 @@ export const History: React.FC = () => {
                   <span className="text-teal-300 font-semibold">{stat.stdDev}</span>
                 </div>
               </div>
+              {isTemp || isPh ? (
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[10px] font-mono">
+                  <span className="text-slate-400">TREND</span>
+                  <span className="text-cyan-300 font-semibold">{trendFor(isTemp ? 'temperature' : 'ph')}</span>
+                </div>
+              ) : null}
             </div>
           );
         })}
@@ -221,7 +215,7 @@ export const History: React.FC = () => {
               )}
             >
               <BarChart3 className="w-3.5 h-3.5" />
-              <span>Multi-Parameter Visual Chart</span>
+              <span>Parameter Trend Chart</span>
             </button>
             <button
               onClick={() => setActiveTab('table')}
@@ -239,42 +233,33 @@ export const History: React.FC = () => {
 
           {activeTab === 'chart' && (
             <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="text-slate-400 text-[11px] hidden sm:inline">Series Filter:</span>
+              <span className="text-slate-400 text-[11px]">Parameter:</span>
               <button
-                onClick={() => setVisibleSeries((p) => ({ ...p, temp: !p.temp }))}
+                onClick={() => setSelectedParameter('temperature')}
                 className={clsx(
                   'px-2 py-0.5 rounded border transition-colors',
-                  visibleSeries.temp ? 'bg-cyan-950/60 text-cyan-300 border-cyan-600/60' : 'opacity-40 border-slate-800'
+                  selectedParameter === 'temperature' ? 'bg-cyan-950/60 text-cyan-300 border-cyan-600/60' : 'text-slate-400 border-slate-800'
                 )}
               >
-                Temp (°C)
+                Temperature
               </button>
               <button
-                onClick={() => setVisibleSeries((p) => ({ ...p, ph: !p.ph }))}
+                onClick={() => setSelectedParameter('ph')}
                 className={clsx(
                   'px-2 py-0.5 rounded border transition-colors',
-                  visibleSeries.ph ? 'bg-teal-950/60 text-teal-300 border-teal-600/60' : 'opacity-40 border-slate-800'
+                  selectedParameter === 'ph' ? 'bg-teal-950/60 text-teal-300 border-teal-600/60' : 'text-slate-400 border-slate-800'
                 )}
               >
-                pH Level
+                pH
               </button>
               <button
-                onClick={() => setVisibleSeries((p) => ({ ...p, tds: !p.tds }))}
+                onClick={() => setSelectedParameter('risk')}
                 className={clsx(
                   'px-2 py-0.5 rounded border transition-colors',
-                  visibleSeries.tds ? 'bg-sky-950/60 text-sky-300 border-sky-600/60' : 'opacity-40 border-slate-800'
+                  selectedParameter === 'risk' ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600/60' : 'text-slate-400 border-slate-800'
                 )}
               >
-                TDS (ppm)
-              </button>
-              <button
-                onClick={() => setVisibleSeries((p) => ({ ...p, risk: !p.risk }))}
-                className={clsx(
-                  'px-2 py-0.5 rounded border transition-colors',
-                  visibleSeries.risk ? 'bg-emerald-950/60 text-emerald-300 border-emerald-600/60' : 'opacity-40 border-slate-800'
-                )}
-              >
-                Risk Score
+                Risk
               </button>
             </div>
           )}
@@ -283,6 +268,13 @@ export const History: React.FC = () => {
         {/* Tab 1: Chart View */}
         {activeTab === 'chart' && (
           <div className="space-y-3">
+            <div className="flex items-center justify-between font-mono">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100">{chartConfig.title}</h3>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">{chartConfig.category}</span>
+              </div>
+              <span className="text-[11px] text-slate-400">Y-axis: {chartConfig.unit}</span>
+            </div>
             <div className="h-80 w-full font-mono text-xs">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={combinedData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
@@ -295,6 +287,8 @@ export const History: React.FC = () => {
                   <YAxis
                     stroke="#64748b"
                     tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    domain={selectedParameter === 'risk' ? [0, 100] : ['auto', 'auto']}
+                    label={{ value: chartConfig.unit, angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10 }}
                   />
                   <Tooltip
                     content={({ active, payload, label }) => {
@@ -306,10 +300,8 @@ export const History: React.FC = () => {
                             </div>
                             {payload.map((entry: any) => (
                               <div key={entry.name} className="flex items-center justify-between gap-4">
-                                <span style={{ color: entry.color }} className="font-semibold">
-                                  {entry.name}:
-                                </span>
-                                <span className="font-bold text-slate-100">{entry.value}</span>
+                                <span style={{ color: entry.color }} className="font-semibold">{entry.name}:</span>
+                                <span className="font-bold text-slate-100">{entry.value} {chartConfig.unit}</span>
                               </div>
                             ))}
                           </div>
@@ -320,50 +312,15 @@ export const History: React.FC = () => {
                   />
                   <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'monospace' }} />
 
-                  {visibleSeries.temp && (
-                    <Line
-                      type="monotone"
-                      dataKey="temperature"
-                      name="Temperature (°C)"
-                      stroke="#06b6d4"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                    />
-                  )}
-                  {visibleSeries.ph && (
-                    <Line
-                      type="monotone"
-                      dataKey="ph"
-                      name="pH Level"
-                      stroke="#14b8a6"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                    />
-                  )}
-                  {visibleSeries.tds && (
-                    <Line
-                      type="monotone"
-                      dataKey="tds"
-                      name="TDS (ppm)"
-                      stroke="#38bdf8"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4 }}
-                    />
-                  )}
-                  {visibleSeries.risk && (
-                    <Line
-                      type="monotone"
-                      dataKey="riskScore"
-                      name="Degradation Risk (/100)"
-                      stroke="#10b981"
-                      strokeWidth={2.5}
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                    />
-                  )}
+                  <Line
+                    type="monotone"
+                    dataKey={chartConfig.dataKey}
+                    name={chartConfig.title.replace(' Trend', '')}
+                    stroke={chartConfig.color}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 5 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -405,7 +362,6 @@ export const History: React.FC = () => {
                     <th className="p-3">Timestamp (IST)</th>
                     <th className="p-3 text-cyan-300">Temp [MEASURED]</th>
                     <th className="p-3 text-cyan-300">pH [MEASURED]</th>
-                    <th className="p-3 text-cyan-300">TDS [MEASURED]</th>
                     <th className="p-3 text-teal-300">Risk Score [DERIVED]</th>
                     <th className="p-3 text-teal-300">Condition [DERIVED]</th>
                     <th className="p-3 text-right text-indigo-300">Confidence [PREDICTED]</th>
@@ -417,7 +373,6 @@ export const History: React.FC = () => {
                       <td className="p-3 text-slate-300 text-[11px] font-medium">{row.formattedTimestampIST}</td>
                       <td className="p-3 text-cyan-300 font-semibold">{row.temperature.toFixed(2)} °C</td>
                       <td className="p-3 text-teal-300 font-semibold">{row.ph.toFixed(2)}</td>
-                      <td className="p-3 text-sky-300 font-semibold">{row.tds} ppm</td>
                       <td className="p-3">
                         <span className="font-bold text-emerald-300">{row.riskScore}</span>
                         <span className="text-[10px] text-slate-400">/100</span>
@@ -464,7 +419,7 @@ export const History: React.FC = () => {
         onClose={() => setExportModalOpen(false)}
         readings={historicalReadings}
         models={historicalModels}
-        nodeName={activeNode?.name || 'Node-01'}
+        nodeName="Prototype Monitoring Node (STG-PROTO-01)"
       />
 
     </div>

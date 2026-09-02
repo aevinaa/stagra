@@ -13,8 +13,8 @@ interface DirectSensorCardsProps {
 export const DirectSensorCards: React.FC<DirectSensorCardsProps> = ({ reading, node }) => {
   if (!reading || !node) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-        {[1, 2, 3].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
+        {[1, 2].map((i) => (
           <div key={i} className="h-44 rounded-xl bg-[#0a101b] border border-slate-800" />
         ))}
       </div>
@@ -32,7 +32,7 @@ export const DirectSensorCards: React.FC<DirectSensorCardsProps> = ({ reading, n
         <DirectVsModelBadge type="MEASURED" variant="minimal" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* 1. TEMPERATURE SENSOR */}
         <div className="p-4 rounded-xl bg-[#0a101b] border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between shadow-md">
@@ -135,58 +135,6 @@ export const DirectSensorCards: React.FC<DirectSensorCardsProps> = ({ reading, n
             />
           </div>
         </div>
-
-        {/* 3. TDS SENSOR */}
-        <div className="p-4 rounded-xl bg-[#0a101b] border border-slate-800 hover:border-sky-500/40 transition-all flex flex-col justify-between shadow-md">
-          <div>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-sky-950/60 border border-sky-800/60 text-sky-400">
-                  <Gauge className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                    SENSOR 03
-                  </span>
-                  <h4 className="font-mono font-bold text-sm text-slate-100">Total Dissolved Solids</h4>
-                </div>
-              </div>
-              <span className="px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-700/60 font-mono text-[10px] text-sky-300 font-semibold">
-                Analog TDS
-              </span>
-            </div>
-
-            <div className="my-3">
-              <div className="flex items-baseline gap-1.5 font-mono">
-                <span className="text-3xl font-extrabold text-slate-100 tracking-tight">
-                  {Math.round(reading.tds)}
-                </span>
-                <span className="text-sm font-semibold text-sky-400">ppm</span>
-                <span className="text-xs text-slate-400 ml-1.5">
-                  ({(reading.tds * 1.56).toFixed(0)} µS/cm)
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-sans mt-0.5 leading-snug">
-                Ionic concentration. Captures evaporative mineral density & organic decay solids.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-800/80">
-            <MetricGauge
-              value={reading.tds}
-              min={50}
-              max={1000}
-              unit="ppm"
-              label="Ionic Load"
-              optimalRange={[100, 450]}
-              warningThreshold={550}
-              criticalThreshold={750}
-              precision={0}
-            />
-          </div>
-        </div>
-
       </div>
     </div>
   );

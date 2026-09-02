@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { TelemetryProvider } from './context/TelemetryContext';
 import { Header } from './components/layout/Header';
 import { Navbar } from './components/layout/Navbar';
-import { Footer } from './components/layout/Footer';
 import { DataSourceBanner } from './components/common/DataSourceBanner';
 
 // Core Pages
@@ -41,9 +40,6 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-
-          {/* Research pipeline attribution footer */}
-          <Footer />
 
         </div>
       </BrowserRouter>

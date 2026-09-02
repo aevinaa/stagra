@@ -37,16 +37,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         'Node_ID',
         'Direct_Temperature_Celsius',
         'Direct_pH',
-        'Direct_TDS_ppm',
-        'Direct_Battery_V',
-        'Direct_RSSI_dBm',
         'Model_Water_Condition',
         'Model_Degradation_Risk',
         'Model_Risk_Score',
         'Model_Confidence_Pct',
-        'Model_Estimated_TimeToCritical_Hrs',
-        'Model_GrowthSuitabilityIndex_Est',
-        'Data_Source',
       ].join(',');
 
       const rows = readings.map((r, idx) => {
@@ -57,16 +51,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           r.nodeId,
           r.temperature,
           r.ph,
-          r.tds,
-          r.batteryVoltage,
-          r.signalStrengthDbm,
           `"${m?.waterCondition || 'N/A'}"`,
           m?.degradationRisk || 'N/A',
           m?.riskScore || 'N/A',
           m?.modelConfidence || 'N/A',
-          m?.degradationProgression?.timeToCriticalHours || 'N/A',
-          m?.degradationProgression?.bacterialGrowthIndexEst || 'N/A',
-          '"RESEARCH TELEMETRY"',
         ].join(',');
       });
 
@@ -83,8 +71,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         dataSource: 'RESEARCH TELEMETRY',
         sensorTelemetry: readings.map((r, idx) => ({
           timestampIST: formatDateTimeTableIST(r.timestamp),
-          directSensor: r,
-          modelDerived: models[idx] || null,
+          nodeId: r.nodeId,
+          temperature: r.temperature,
+          ph: r.ph,
+          derived: {
+            condition: models[idx]?.waterCondition || null,
+            degradationRisk: models[idx]?.degradationRisk || null,
+            riskScore: models[idx]?.riskScore ?? null,
+          },
+          predictionConfidence: models[idx]?.modelConfidence ?? null,
         })),
       };
 

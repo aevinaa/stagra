@@ -27,7 +27,6 @@ export const Home: React.FC = () => {
 
   return (
     <div className="space-y-10 pb-12">
-      
       {/* Research Hero Section */}
       <section className="relative rounded-2xl bg-gradient-to-b from-[#0e1726] to-[#080d16] border border-cyan-500/30 p-6 sm:p-10 shadow-2xl overflow-hidden bg-grid-scientific">
         <div className="relative z-10 max-w-4xl space-y-5">
@@ -50,7 +49,7 @@ export const Home: React.FC = () => {
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-3xl">
             An end-to-end IoT monitoring and degradation prediction platform. 
-            STAGRA acquires real-time physical telemetry (<strong>Temperature, pH, TDS</strong>) via prototype ESP32 microcontroller 
+            STAGRA acquires real-time physical telemetry (<strong>Temperature, pH</strong>) via prototype ESP32 microcontroller 
             and evaluates stagnant water growth risk using a proposed model architecture of temporal <strong>Transformers</strong> and spatial <strong>Graph Neural Networks (GNNs)</strong>.
           </p>
 
@@ -79,154 +78,6 @@ export const Home: React.FC = () => {
               <span>System & Hardware Pipeline</span>
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* System Architecture Flow Diagram */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold font-mono text-slate-100 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-cyan-400" />
-              System Architecture & Dataflow Pipeline
-            </h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
-              Strict isolation: Sensor hardware → Centralized backend ingestion → Neural prediction models → Analytical frontend
-            </p>
-          </div>
-          <span className="text-xs font-mono text-slate-400 hidden sm:block">
-            9-Stage Ingestion Pipeline
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-9 gap-2 font-mono text-xs">
-          
-          {/* Stage 1 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-cyan-800/50 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-cyan-400 font-bold uppercase">01. INGESTION</div>
-              <div className="font-bold text-slate-100 mt-1">Water Sample</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Standing stormwater, drainage sump, or retention pond.
-              </p>
-            </div>
-            <div className="text-[10px] text-cyan-400/80 pt-2 border-t border-slate-800 mt-2">
-              In-situ Sample
-            </div>
-          </div>
-
-          {/* Stage 2 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.1)] flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-cyan-400 font-bold uppercase">02. TRANSDUCTION</div>
-              <div className="font-bold text-cyan-300 mt-1">Temp + pH + TDS</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Direct physical sensors only. DO/Turbidity in Phase II.
-              </p>
-            </div>
-            <div className="text-[10px] text-cyan-400 pt-2 border-t border-slate-800 mt-2 font-semibold">
-              DIRECT SENSOR
-            </div>
-          </div>
-
-          {/* Stage 3 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">03. EMBEDDED</div>
-              <div className="font-bold text-slate-100 mt-1">ESP32 Node</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Digitization, 1-Wire parsing, ADC conditioning, WiFi/LoRa.
-              </p>
-            </div>
-            <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-800 mt-2">
-              5s Sampling Tick
-            </div>
-          </div>
-
-          {/* Stage 4 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">04. INGRESS</div>
-              <div className="font-bold text-slate-100 mt-1">Backend API</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                REST / WebSocket ingestion endpoints with payload validation.
-              </p>
-            </div>
-            <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-800 mt-2">
-              REST JSON
-            </div>
-          </div>
-
-          {/* Stage 5 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">05. PERSISTENCE</div>
-              <div className="font-bold text-slate-100 mt-1">Historical DB</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Time-series storage for longitudinal research analysis.
-              </p>
-            </div>
-            <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-800 mt-2">
-              TimescaleDB
-            </div>
-          </div>
-
-          {/* Stage 6 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">06. PIPELINE</div>
-              <div className="font-bold text-slate-100 mt-1">Preprocessing</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Moving average filtering, outlier clipping, normalization.
-              </p>
-            </div>
-            <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-800 mt-2">
-              Feature Matrix
-            </div>
-          </div>
-
-          {/* Stage 7 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-teal-500/40 shadow-[0_0_10px_rgba(20,184,166,0.15)] flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-teal-400 font-bold uppercase">07. PROPOSED AI</div>
-              <div className="font-bold text-teal-300 mt-1">Transformer + GNN</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Transformer (Temporal) &amp; GNN (Spatial graph) architecture.
-              </p>
-            </div>
-            <div className="text-[10px] text-teal-300 pt-2 border-t border-slate-800 mt-2 font-semibold">
-              Proposed Model
-            </div>
-          </div>
-
-          {/* Stage 8 */}
-          <div className="p-3 rounded-xl bg-[#0a101b] border border-teal-800/50 flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-teal-400 font-bold uppercase">08. INFERENCE</div>
-              <div className="font-bold text-slate-100 mt-1">Prediction Layer</div>
-              <p className="text-[10px] text-slate-400 font-sans mt-1">
-                Degradation risk score (0-100), condition classification.
-              </p>
-            </div>
-            <div className="text-[10px] text-teal-400/80 pt-2 border-t border-slate-800 mt-2">
-              SIMULATED OUTPUT
-            </div>
-          </div>
-
-          {/* Stage 9 */}
-          <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.2)] flex flex-col justify-between">
-            <div>
-              <div className="text-[10px] text-cyan-300 font-bold uppercase">09. INTERFACE</div>
-              <div className="font-bold text-cyan-200 mt-1">STAGRA Frontend</div>
-              <p className="text-[10px] text-slate-300 font-sans mt-1">
-                Scientific console distinguishing direct vs derived data.
-              </p>
-            </div>
-            <div className="text-[10px] text-cyan-300 pt-2 border-t border-cyan-800 mt-2 font-bold">
-              Current App
-            </div>
-          </div>
-
         </div>
       </section>
 
@@ -292,10 +143,6 @@ export const Home: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-[#0d1624] border border-cyan-950/80 space-y-1">
-                  <div className="flex items-center justify-between text-cyan-300 font-bold">
-                    <span className="flex items-center gap-1.5"><Gauge className="w-3.5 h-3.5" /> TDS (ppm)</span>
-                    <span className="text-[10px] text-cyan-400 font-normal">Induction Probe</span>
-                  </div>
                   <p className="text-[11px] text-slate-400 font-sans">
                     Total Dissolved Solids reflecting mineral accumulation and evaporative stagnation.
                   </p>

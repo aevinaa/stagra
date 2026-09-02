@@ -205,65 +205,99 @@ export const DataSourceBanner: React.FC = () => {
         </div>
       </div>
 
-      {/* Hardware info modal */}
-      {hardwareModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0c1421] border border-cyan-500/40 rounded-xl max-w-lg w-full p-5 shadow-2xl">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-cyan-400" />
-                <div>
-                  <h3 className="font-mono font-bold text-slate-100 text-sm">
-                    ESP32 Hardware Bridge & Production API Integration
-                  </h3>
-                  <p className="text-xs text-slate-400 font-sans">STAGRA Ingestion Pipeline Architecture</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setHardwareModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200 text-sm font-mono"
-              >
-                ✕
-              </button>
+     {/* Hardware info modal */}
+{hardwareModalOpen && (
+  <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="bg-[#0c1421] border border-cyan-500/40 rounded-xl max-w-lg w-full p-5 shadow-2xl">
+      <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <Cpu className="w-5 h-5 text-cyan-400" />
+          <div>
+            <h3 className="font-mono font-bold text-slate-100 text-sm">
+              ESP32 Hardware Bridge
+            </h3>
+            <p className="text-xs text-slate-400 font-sans">
+              STAGRA Prototype Hardware Interface
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setHardwareModalOpen(false)}
+          className="text-slate-400 hover:text-slate-200 text-sm font-mono"
+          aria-label="Close hardware information"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="py-4 space-y-4 text-xs text-slate-300 leading-relaxed font-sans">
+        <div className="p-3 rounded-lg bg-[#080d17] border border-slate-800">
+          <div className="text-cyan-300 font-semibold uppercase tracking-wider mb-2">
+            Current Prototype
+          </div>
+
+          <div className="space-y-1.5 font-mono text-[11px]">
+            <div>
+              Monitoring Node:{' '}
+              <strong className="text-slate-100">
+                STG-PROTO-01
+              </strong>
             </div>
 
-            <div className="py-4 space-y-3 text-xs text-slate-300 leading-relaxed font-sans">
-              <div className="p-3 rounded-lg bg-[#080d17] border border-slate-800 text-[11px] font-mono space-y-1.5">
-                <div className="text-cyan-300 font-semibold uppercase tracking-wider">
-                  Hardware Dataflow Path:
-                </div>
-                <div className="text-slate-400">
-                  Water Sample → DS18B20 Temp + pH Probe + Analog TDS Sensor → ESP32 Microcontroller →
-                  Backend API (JSON) → PostgreSQL / TimescaleDB → Transformer + GNN Inference Engine → STAGRA Frontend
-                </div>
-              </div>
-
-              <p>
-                As specified in the research design: <strong>The frontend does NOT communicate directly with the ESP32</strong>. 
-                Instead, ESP32 nodes push telemetry to the centralized backend API, which feeds the Historical Database, Data Preprocessor, 
-                and ML models.
-              </p>
-
-              <div className="p-2.5 rounded bg-amber-950/40 border border-amber-800/40 text-amber-200 text-[11px] flex items-start gap-2">
-                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  Currently connected to the <strong>STAGRA High-Fidelity Scientific Simulator</strong>. 
-                  When deploying in the field, setting <code className="bg-black/40 px-1 py-0.5 rounded text-amber-300">VITE_API_BASE_URL</code> will seamlessly ingest live ESP32 node packets without any UI changes.
-                </div>
-              </div>
+            <div>
+              Controller:{' '}
+              <strong className="text-slate-100">
+                ESP32
+              </strong>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-800">
-              <button
-                onClick={() => setHardwareModalOpen(false)}
-                className="px-4 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-semibold font-mono text-xs transition-colors"
-              >
-                Acknowledged
-              </button>
+            <div>
+              Sensors:{' '}
+              <strong className="text-cyan-300">
+                Temperature + pH
+              </strong>
+            </div>
+
+            <div>
+              Data Source:{' '}
+              <strong className="text-amber-300">
+                {dataSourceMode}
+              </strong>
             </div>
           </div>
         </div>
-      )}
+
+        <p>
+          The frontend does <strong>The frontend does NOT communicate directly with the ESP32.</strong>{' '}
+          Sensor readings are collected by the ESP32 prototype and are intended
+          to be transferred to the backend API for storage, processing, and
+          model analysis before being displayed by STAGRA.
+        </p>
+
+        <div className="p-2.5 rounded bg-amber-950/40 border border-amber-800/40 text-amber-200 text-[11px] flex items-start gap-2">
+          <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+
+          <div>
+            The current frontend uses{' '}
+            <strong>simulated telemetry</strong> during development.
+            When the ESP32 backend integration is ready, the same interface
+            can consume the live sensor stream through the API layer.
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-3 border-t border-slate-800">
+        <button
+          onClick={() => setHardwareModalOpen(false)}
+          className="px-4 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-semibold font-mono text-xs transition-colors"
+        >
+          Acknowledged
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

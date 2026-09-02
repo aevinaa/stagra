@@ -35,7 +35,7 @@ export const DirectVsModelBadge: React.FC<DirectVsModelBadgeProps> = ({
       label: 'MEASURED',
       headerLabel: 'MEASURED SENSOR DATA',
       cardTitle: 'MEASURED SENSOR TELEMETRY',
-      cardSub: 'Physical Hardware Probes (Temp, pH, TDS)',
+      cardSub: 'Physical Hardware Probes (Temp, pH)',
       icon: Cpu,
       dotColor: 'bg-cyan-400',
       minimalClass: 'bg-cyan-950/60 text-cyan-300 border-cyan-700/60',

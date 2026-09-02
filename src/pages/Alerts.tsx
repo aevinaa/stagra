@@ -48,7 +48,7 @@ export const Alerts: React.FC = () => {
             )}
           </div>
           <p className="text-xs text-slate-400 font-sans mt-0.5">
-            Automated threshold triggers for physical sensor boundaries and Transformer/GNN biological risk spikes
+            Automated threshold triggers for measured sensor boundaries and model-estimated degradation risk.
           </p>
         </div>
 
@@ -239,13 +239,6 @@ export const Alerts: React.FC = () => {
             <div className="text-slate-300 mt-1">Normal: 6.50 - 8.50</div>
             <div className="text-amber-400 text-[11px]">Warning: &lt;6.5 or &gt;8.5</div>
             <div className="text-rose-400 text-[11px]">Critical: &lt;5.8 or &gt;9.2</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-[#0d1624] border border-slate-800">
-            <div className="text-sky-400 font-bold">TDS (ppm)</div>
-            <div className="text-slate-300 mt-1">Normal: 100 - 450 ppm</div>
-            <div className="text-amber-400 text-[11px]">Warning: &gt; 550 ppm</div>
-            <div className="text-rose-400 text-[11px]">Critical: &gt; 800 ppm</div>
           </div>
 
           <div className="p-3 rounded-lg bg-[#0d1624] border border-slate-800">

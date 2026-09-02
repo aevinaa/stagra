@@ -155,56 +155,6 @@ export const DirectSensorPanel: React.FC<DirectSensorPanelProps> = ({ reading, n
             />
           </div>
         </div>
-
-        {/* 3. TDS (Total Dissolved Solids) SENSOR */}
-        <div className="p-4 rounded-xl bg-[#0d1624] border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-800/60 text-cyan-400">
-                <Gauge className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                  PHYSICAL SENSOR 03
-                </span>
-                <h4 className="font-mono font-bold text-sm text-slate-100">Total Dissolved Solids</h4>
-              </div>
-            </div>
-            <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-700/60 font-mono text-[10px] text-cyan-300 font-semibold">
-              Analog TDS Probe
-            </span>
-          </div>
-
-          <div className="my-4">
-            <div className="flex items-baseline gap-1.5 font-mono">
-              <span className="text-3xl font-extrabold text-slate-100 tracking-tight">
-                {reading.tds}
-              </span>
-              <span className="text-sm font-semibold text-cyan-400">ppm</span>
-              <span className="text-xs text-slate-400 ml-2">
-                (~{(reading.tds * 1.56).toFixed(0)} µS/cm EC)
-              </span>
-            </div>
-            <div className="text-[11px] text-slate-400 font-sans mt-1">
-              Dissolved ionic salts and conductive mineral particulate accumulation.
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-800/60">
-            <MetricGauge
-              value={reading.tds}
-              min={50}
-              max={1200}
-              unit="ppm"
-              label="Ionic Mineral Concentration"
-              optimalRange={[100, 450]}
-              warningThreshold={550}
-              criticalThreshold={800}
-              precision={0}
-            />
-          </div>
-        </div>
-
       </div>
 
       {/* Sensor exclusion banner - explicitly respecting instruction: DO & Turbidity are NOT live sensors */}

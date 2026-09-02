@@ -24,7 +24,7 @@ export const ActiveTelemetryStreamChart: React.FC<ActiveTelemetryStreamChartProp
   readings,
   models,
 }) => {
-  const [selectedMetric, setSelectedMetric] = useState<'temp' | 'ph' | 'tds' | 'risk'>('risk');
+  const [selectedMetric, setSelectedMetric] = useState<'temp' | 'ph' | 'risk'>('risk');
 
   // Format combined data for recharts using IST timestamps
   const chartData = readings.map((r, idx) => {
@@ -36,7 +36,6 @@ export const ActiveTelemetryStreamChart: React.FC<ActiveTelemetryStreamChartProp
       timestamp: r.timestamp,
       temperature: r.temperature,
       ph: r.ph,
-      tds: r.tds,
       riskScore: m?.riskScore || 0,
       confidence: m?.modelConfidence || 90,
     };
@@ -67,18 +66,6 @@ export const ActiveTelemetryStreamChart: React.FC<ActiveTelemetryStreamChartProp
           type: 'MEASURED' as const,
           refValue: 8.5,
           refLabel: 'Alkaline Bloom Bound (8.5 pH)',
-        };
-      case 'tds':
-        return {
-          title: 'Measured Total Dissolved Solids',
-          key: 'tds',
-          unit: 'ppm',
-          stroke: '#38bdf8',
-          fill: 'url(#tdsGradient)',
-          domain: ['dataMin - 30', 'dataMax + 30'],
-          type: 'MEASURED' as const,
-          refValue: 550,
-          refLabel: 'Stagnant Threshold (550 ppm)',
         };
       case 'risk':
       default:
@@ -151,17 +138,6 @@ export const ActiveTelemetryStreamChart: React.FC<ActiveTelemetryStreamChartProp
           >
             pH (MEASURED)
           </button>
-          <button
-            onClick={() => setSelectedMetric('tds')}
-            className={clsx(
-              'px-2.5 py-1 rounded transition-colors',
-              selectedMetric === 'tds'
-                ? 'bg-cyan-950/80 text-cyan-300 font-bold border border-cyan-700/60 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            )}
-          >
-            TDS (MEASURED)
-          </button>
         </div>
       </div>
 
@@ -181,8 +157,6 @@ export const ActiveTelemetryStreamChart: React.FC<ActiveTelemetryStreamChartProp
               <linearGradient id="phGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.4} />
                 <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="tdsGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
                 <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
               </linearGradient>
