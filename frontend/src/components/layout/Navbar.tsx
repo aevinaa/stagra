@@ -6,9 +6,7 @@ import {
   History as HistoryIcon,
   LineChart,
   Bell,
-  Cpu,
-  Layers,
-  Sparkles,
+  Cpu
 } from 'lucide-react';
 import { useTelemetry } from '../../context/TelemetryContext';
 import clsx from 'clsx';
@@ -22,38 +20,38 @@ export const Navbar: React.FC = () => {
       label: 'Home',
       icon: Home,
       exact: true,
-      description: 'Project Overview & Research Pipeline',
+      description: 'Project Overview & Research Prototype',
     },
     {
       to: '/dashboard',
       label: 'Dashboard',
       icon: LayoutDashboard,
-      description: 'Direct Sensor vs Model Telemetry Console',
+      description: 'Live Prototype Monitoring Console',
     },
     {
       to: '/history',
       label: 'History',
       icon: HistoryIcon,
-      description: 'Temporal Time-Series & Statistical Analysis',
+      description: 'Historical Telemetry & Research Data',
     },
     {
       to: '/predictions',
       label: 'Predictions',
       icon: LineChart,
-      description: 'Transformer Temporal & GNN Spatial Graphs',
+      description: 'Degradation Forecast & Proposed Models',
     },
     {
       to: '/alerts',
       label: 'Alerts',
       icon: Bell,
       badge: unreadAlertsCount > 0 ? unreadAlertsCount : undefined,
-      description: 'Threshold Triggers & Water Degradation Warnings',
+      description: 'Measured, Derived & Predicted Alerts',
     },
     {
       to: '/system',
       label: 'System',
       icon: Cpu,
-      description: 'Hardware Health & Future Sensor Roadmap',
+      description: 'Current Hardware & Future Research',
     },
   ];
 
@@ -93,11 +91,6 @@ export const Navbar: React.FC = () => {
               )}
             </NavLink>
           ))}
-        </div>
-
-        <div className="hidden lg:flex items-center gap-2 text-[11px] font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-teal-400" />
-          <span>Transformer + GNN Proposed Architecture</span>
         </div>
       </div>
     </nav>

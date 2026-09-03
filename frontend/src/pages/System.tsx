@@ -4,29 +4,21 @@ import {
   Cpu,
   Database,
   BrainCircuit,
-  Radio,
-  Server,
-  Activity,
-  Layers,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Compass,
-  ArrowUpRight,
-  Info,
+  Network,
   Beaker,
+  CheckCircle2,
+  CircleDashed,
+  FlaskConical,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const System: React.FC = () => {
-  const { systemHealth, nodes, dataSourceMode, setDataSourceMode } = useTelemetry();
+  const { systemHealth } = useTelemetry();
 
   if (!systemHealth) {
     return (
       <div className="p-8 text-center font-mono text-xs text-cyan-400">
-        LOADING SYSTEM HARDWARE TELEMETRY...
+        LOADING STAGRA SYSTEM STATUS...
       </div>
     );
   }
@@ -34,161 +26,514 @@ export const System: React.FC = () => {
   const { futureSensors } = systemHealth;
 
   return (
-    <div className="space-y-8 pb-12">
-      
-      {/* System Overview Banner */}
-      <div className="p-5 rounded-2xl bg-[#0a101b] border border-cyan-500/30 shadow-xl flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-cyan-950/80 border border-cyan-600/50 text-cyan-400">
-              <Cpu className="w-5 h-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-bold font-mono text-slate-100">
-                System Health &amp; Hardware Telemetry
-              </h2>
-              <p className="text-xs text-slate-400 font-sans">
-                ESP32 distributed nodes, backend ingestion latency, model inference status &amp; sensor expansion
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6 pb-12">
 
-        <div className="flex items-center gap-3 font-mono text-xs">
-          <div className="px-3 py-1.5 rounded-lg bg-[#070c14] border border-slate-800 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Hardware: <strong className="text-emerald-300">1 Prototype Node Active</strong></span>
-          </div>
-          <div className="px-3 py-1.5 rounded-lg bg-[#070c14] border border-slate-800">
-            <span>Model: <strong className="text-cyan-300">Proposed Architecture</strong></span>
-          </div>
-        </div>
-      </div>
+      {/* =====================================================
+          SYSTEM HEADER
+          ===================================================== */}
+      <section className="rounded-xl bg-[#0a101b] border border-slate-800 p-5">
 
-      {/* SECTION 2: SAMPLING NODE HARDWARE REGISTERS TABLE */}
-      <section className="rounded-xl bg-[#0a101b] border border-slate-800 p-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        <div className="flex items-start gap-3">
+
+          <div className="p-2.5 rounded-lg bg-cyan-950/50 border border-cyan-800/60 text-cyan-400">
+            <Cpu className="w-5 h-5" />
+          </div>
+
           <div>
-            <h3 className="font-mono font-bold text-sm text-slate-100 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              ESP32 Prototype &amp; Simulated Nodes Registry
-            </h3>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
-              Node configuration, simulated coordinates, sensor interfaces (Temp, pH, TDS), and prototype hardware status
+            <div className="flex flex-wrap items-center gap-2">
+
+              <h1 className="text-xl font-bold font-mono text-slate-100">
+                STAGRA System
+              </h1>
+
+              <span className="px-2 py-0.5 rounded border border-cyan-700/50 bg-cyan-950/30 text-cyan-300 text-[9px] font-mono font-bold">
+                TECHNICAL OVERVIEW
+              </span>
+
+            </div>
+
+            <p className="text-xs text-slate-400 font-sans mt-1 max-w-3xl">
+              Current prototype implementation and proposed research
+              architecture for stagnant-water assessment.
             </p>
           </div>
-          <span className="text-xs font-mono text-slate-400">
-            Hardware: Espressif ESP32-WROOM-32D (Prototype)
-          </span>
+
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs">
-            <thead className="bg-[#090e17] text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="p-3">Station Node</th>
-                <th className="p-3">Type</th>
-                <th className="p-3">Water Body Class</th>
-                <th className="p-3">MAC Address</th>
-                <th className="p-3">Firmware</th>
-                <th className="p-3">Sampling Rate</th>
-                <th className="p-3">Battery</th>
-                <th className="p-3 text-right">RSSI Signal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 bg-[#0a101b]">
-              {nodes.map((node) => (
-                <tr key={node.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="p-3 font-semibold text-cyan-300">
-                    <div className="flex items-center gap-2">
-                      <span className={clsx('w-2 h-2 rounded-full', node.isPrototypeHardware ? 'bg-emerald-400' : 'bg-cyan-400')} />
-                      <span>{node.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <span className={clsx(
-                      'px-1.5 py-0.5 rounded text-[10px] font-bold',
-                      node.isPrototypeHardware
-                        ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50'
-                        : 'bg-slate-800/80 text-slate-300 border border-slate-700/50'
-                    )}>
-                      {node.isPrototypeHardware ? 'PROTOTYPE NODE' : 'SIMULATED DATA'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-slate-300">{node.waterBodyType}</td>
-                  <td className="p-3 text-slate-400 font-mono text-[11px]">{node.esp32Mac}</td>
-                  <td className="p-3 text-teal-300 font-mono text-[11px]">{node.firmwareVersion}</td>
-                  <td className="p-3 text-slate-300">{node.samplingIntervalSec}s</td>
-                  <td className="p-3 text-emerald-400 font-semibold">{node.batteryLevelPct}%</td>
-                  <td className="p-3 text-right text-slate-300">{node.signalRssi} dBm</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </section>
 
-      {/* SECTION 3: FUTURE SENSOR EXPANSION ROADMAP */}
-      {/* Explicitly fulfilling requirement: DO and Turbidity are NOT live sensors, only shown in roadmap */}
-      <section className="rounded-xl bg-[#0a101b] border border-cyan-500/30 p-6 space-y-4 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+
+      {/* =====================================================
+          CURRENT HARDWARE
+          ===================================================== */}
+      <section className="rounded-xl bg-[#0a101b] border border-slate-800 p-5">
+
+        <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+
+          <Cpu className="w-4 h-4 text-cyan-400" />
+
           <div>
-            <div className="flex items-center gap-2">
-              <Beaker className="w-5 h-5 text-cyan-400" />
-              <h3 className="font-mono font-bold text-base text-slate-100">
-                Future Sensor Hardware Expansion Roadmap
-              </h3>
-            </div>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
-              Targeted sensor extensions for subsequent research phases. Note: <strong>DO and Turbidity are NOT fabricated as live measurements</strong> in the current hardware stage.
+            <h2 className="text-sm font-bold font-mono text-slate-100">
+              Current Hardware
+            </h2>
+
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              Components currently represented by the prototype.
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-600/50 font-mono text-[10px] font-bold uppercase">
-            Phase II &amp; III Roadmap
-          </span>
+
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-cyan-800/40">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Controller
+            </div>
+
+            <div className="text-lg font-bold font-mono text-cyan-300 mt-1">
+              ESP32
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Single physical prototype node.
+            </p>
+
+          </div>
+
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-cyan-800/40">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Temperature
+            </div>
+
+            <div className="text-lg font-bold font-mono text-cyan-300 mt-1">
+              DS18B20
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Direct water-temperature measurement.
+            </p>
+
+          </div>
+
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-teal-800/40">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Chemical Parameter
+            </div>
+
+            <div className="text-lg font-bold font-mono text-teal-300 mt-1">
+              pH Probe
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Direct pH measurement of the water sample.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="mt-4 p-3 rounded-lg bg-emerald-950/10 border border-emerald-900/40">
+
+          <div className="flex items-center gap-2">
+
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+
+            <span className="text-[10px] font-mono font-bold text-emerald-300">
+              CURRENT PHYSICAL SCOPE
+            </span>
+
+          </div>
+
+          <p className="text-[10px] text-slate-400 font-sans mt-1">
+            STAGRA currently represents one physical ESP32 prototype
+            node measuring temperature and pH. Additional sensor types
+            are not treated as live measurements.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          SOFTWARE LAYERS
+          ===================================================== */}
+      <section className="rounded-xl bg-[#0a101b] border border-slate-800 p-5">
+
+        <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+
+          <Database className="w-4 h-4 text-cyan-400" />
+
+          <div>
+            <h2 className="text-sm font-bold font-mono text-slate-100">
+              Software Layers
+            </h2>
+
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              Logical layers used by the current prototype interface.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-slate-800">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Presentation
+            </div>
+
+            <div className="text-sm font-bold font-mono text-cyan-300 mt-1">
+              STAGRA Frontend
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Monitoring, historical analysis, alerts and prediction
+              visualization.
+            </p>
+
+          </div>
+
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-slate-800">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Data Processing
+            </div>
+
+            <div className="text-sm font-bold font-mono text-teal-300 mt-1">
+              Backend / Processing Layer
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Receives telemetry, stores observations and prepares
+              data for analytical processing.
+            </p>
+
+          </div>
+
+
+          <div className="p-4 rounded-lg bg-[#0d1624] border border-slate-800">
+
+            <div className="text-[9px] font-mono uppercase text-slate-500">
+              Research Data
+            </div>
+
+            <div className="text-sm font-bold font-mono text-indigo-300 mt-1">
+              Historical Time Series
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Temperature and pH observations used for temporal
+              analysis and experimentation.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          PROPOSED TEMPORAL MODEL
+          ===================================================== */}
+      <section className="rounded-xl bg-[#090f19] border border-indigo-800/40 p-5">
+
+        <div className="flex items-start justify-between gap-4">
+
+          <div className="flex items-start gap-3">
+
+            <div className="p-2 rounded-lg bg-indigo-950/30 border border-indigo-800/50">
+              <BrainCircuit className="w-4 h-4 text-indigo-400" />
+            </div>
+
+            <div>
+
+              <div className="flex flex-wrap items-center gap-2">
+
+                <h2 className="text-sm font-bold font-mono text-slate-100">
+                  Proposed Temporal Model
+                </h2>
+
+                <span className="px-2 py-0.5 rounded border border-indigo-700/50 bg-indigo-950/30 text-indigo-300 text-[9px] font-mono font-bold">
+                  TRANSFORMER
+                </span>
+
+              </div>
+
+              <p className="text-[10px] text-slate-400 mt-1 max-w-2xl">
+                A proposed temporal model for learning relationships
+                across sequential temperature and pH observations.
+              </p>
+
+            </div>
+
+          </div>
+
+          <span className="hidden sm:inline px-2 py-1 rounded border border-amber-800/50 bg-amber-950/20 text-amber-300 text-[9px] font-mono">
+            PROPOSED / SIMULATED
+          </span>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Input
+            </div>
+
+            <div className="text-sm font-bold font-mono text-cyan-300 mt-1">
+              Temporal Sensor Series
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Temperature + pH over time.
+            </p>
+
+          </div>
+
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Model
+            </div>
+
+            <div className="text-sm font-bold font-mono text-indigo-300 mt-1">
+              Temporal Transformer
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Proposed sequence-learning architecture.
+            </p>
+
+          </div>
+
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Output
+            </div>
+
+            <div className="text-sm font-bold font-mono text-indigo-300 mt-1">
+              Risk / Forecast
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Simulated degradation trajectory.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FUTURE GNN
+          ===================================================== */}
+      <section className="rounded-xl bg-[#090f19] border border-slate-800 p-5">
+
+        <div className="flex items-start gap-3">
+
+          <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+            <Network className="w-4 h-4 text-slate-400" />
+          </div>
+
+          <div>
+
+            <div className="flex flex-wrap items-center gap-2">
+
+              <h2 className="text-sm font-bold font-mono text-slate-200">
+                Future Spatial Extension
+              </h2>
+
+              <span className="px-2 py-0.5 rounded border border-slate-700 bg-slate-900 text-slate-400 text-[9px] font-mono font-bold">
+                PROPOSED GNN
+              </span>
+
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1 max-w-2xl">
+              A future multi-node deployment could represent sampling
+              locations as a graph and use a GNN to model spatial
+              relationships between them.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Current
+            </div>
+
+            <div className="text-lg font-bold font-mono text-cyan-300 mt-1">
+              1 Node
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Single physical prototype.
+            </p>
+
+          </div>
+
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Future Input
+            </div>
+
+            <div className="text-lg font-bold font-mono text-slate-300 mt-1">
+              Multiple Nodes
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Additional sampling locations.
+            </p>
+
+          </div>
+
+
+          <div className="p-3 rounded-lg bg-[#0c131f] border border-slate-800">
+
+            <div className="text-[9px] uppercase font-mono text-slate-500">
+              Proposed Method
+            </div>
+
+            <div className="text-lg font-bold font-mono text-slate-300 mt-1">
+              GNN
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Spatial relationship modelling.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="mt-3 px-3 py-2 rounded-lg bg-[#070c14] border border-slate-800 text-center text-[9px] font-mono text-slate-500">
+          Future research architecture only. No multi-node physical
+          deployment is currently claimed.
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FUTURE SENSOR EXPANSION
+          ===================================================== */}
+      <section className="rounded-xl bg-[#0a101b] border border-slate-800 p-5">
+
+        <div className="flex items-start gap-3 pb-4 border-b border-slate-800">
+
+          <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-800/50">
+            <Beaker className="w-4 h-4 text-cyan-400" />
+          </div>
+
+          <div>
+
+            <div className="flex flex-wrap items-center gap-2">
+
+              <h2 className="text-sm font-bold font-mono text-slate-100">
+                Future Sensor Expansion
+              </h2>
+
+              <span className="px-2 py-0.5 rounded border border-amber-700/40 bg-amber-950/20 text-amber-300 text-[9px] font-mono">
+                ROADMAP
+              </span>
+
+            </div>
+
+            <p className="text-[10px] text-slate-500 mt-1">
+              Additional measurements planned for later experimental
+              validation. They are not part of the current live prototype.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+
           {futureSensors.map((sensor) => (
             <div
               key={sensor.id}
-              className="p-5 rounded-xl bg-[#0d1624] border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between space-y-4"
+              className="p-4 rounded-lg bg-[#0d1624] border border-slate-800"
             >
-              <div>
-                <div className="flex items-start justify-between">
-                  <span className="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 text-[10px] font-bold uppercase">
-                    {sensor.symbol}
-                  </span>
-                  <span className="text-[10px] text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-700/50">
-                    {sensor.targetPhase}
+
+              <div className="flex items-start justify-between gap-3">
+
+                <div>
+                  <div className="text-[9px] font-mono uppercase text-slate-500">
+                    Future Sensor
+                  </div>
+
+                  <h3 className="text-sm font-bold font-mono text-slate-200 mt-1">
+                    {sensor.name}
+                  </h3>
+
+                  <div className="text-[10px] text-cyan-300 font-mono mt-1">
+                    {sensor.symbol} · {sensor.unit}
+                  </div>
+                </div>
+
+                <CircleDashed className="w-4 h-4 text-slate-600 shrink-0" />
+
+              </div>
+
+
+              <p className="text-[10px] text-slate-400 font-sans mt-3 leading-5">
+                {sensor.scientificRationale}
+              </p>
+
+
+              <div className="mt-3 pt-3 border-t border-slate-800">
+
+                <div className="flex items-center gap-1.5">
+                  <FlaskConical className="w-3.5 h-3.5 text-indigo-400" />
+
+                  <span className="text-[9px] font-mono uppercase text-slate-500">
+                    Planned Model Impact
                   </span>
                 </div>
 
-                <h4 className="font-bold text-slate-100 text-sm mt-3">{sensor.name}</h4>
-                <div className="text-[11px] text-cyan-400/90 mt-0.5">
-                  Unit: <span className="font-semibold text-slate-200">{sensor.unit}</span> • Interface: <span className="text-slate-200">{sensor.interfaceProtocol}</span>
-                </div>
-
-                <p className="text-[11px] text-slate-300 font-sans mt-2.5 leading-relaxed">
-                  {sensor.scientificRationale}
+                <p className="text-[10px] text-slate-500 font-sans mt-1">
+                  {sensor.expectedMlImpact}
                 </p>
+
               </div>
 
-              <div className="space-y-2 pt-3 border-t border-slate-800 text-[11px]">
-                <div className="p-2.5 rounded bg-[#090e17] border border-slate-800">
-                  <span className="text-teal-400 font-semibold block text-[10px] uppercase">
-                    Expected ML Model Impact:
-                  </span>
-                  <span className="text-slate-300 font-sans text-[11px]">{sensor.expectedMlImpact}</span>
-                </div>
-
-                <div className="text-[10px] text-slate-400 font-sans">
-                  <strong>Hardware Note:</strong> {sensor.hardwareNotes}
-                </div>
-              </div>
             </div>
           ))}
+
         </div>
+
       </section>
 
     </div>

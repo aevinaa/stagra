@@ -503,14 +503,14 @@ export function generateAlerts(
         timestamp: reading.timestamp,
         severity: reading.temperature >= 33.5 ? 'CRITICAL' : 'WARNING',
         title: `Measured Sensor: High Water Temperature (${reading.temperature.toFixed(1)}°C)`,
-        message: `Direct temperature sensor reading exceeded standard baseline (>31.0°C). Elevated environmental growth suitability and stagnation tendency anticipated.`,
+        message: `Direct temperature sensor reading exceeded the configured prototype threshold (>31.0°C).`,
         metricType: 'TEMPERATURE',
         category: 'MEASURED',
         directOrModel: 'MEASURED',
         thresholdValue: '> 31.0 °C',
         actualValue: `${reading.temperature.toFixed(2)} °C`,
         acknowledged: false,
-        scientificImpact: 'Thermal energy increases kinetic reaction rates and elevates stagnant environmental growth suitability.',
+        scientificImpact: 'The measured temperature is outside the configured prototype monitoring range and should be reviewed alongside other measured parameters.',
       });
     }
 
@@ -530,7 +530,7 @@ export function generateAlerts(
         thresholdValue: '6.50 - 8.50 pH',
         actualValue: `${reading.ph.toFixed(2)} pH`,
         acknowledged: false,
-        scientificImpact: 'Indicates potential chemical runoff drift or biological photosynthetic/metabolic activity in stagnant water.',
+        scientificImpact: 'Indicates that the measured pH is outside the configured prototype monitoring range and may warrant further investigation.',
       });
     }
 
@@ -543,14 +543,14 @@ export function generateAlerts(
         timestamp: model.timestamp,
         severity: model.riskScore >= 85 ? 'CRITICAL' : 'WARNING',
         title: `Derived Condition: ${model.waterCondition.toUpperCase()} (Score: ${model.riskScore}/100)`,
-        message: `Calculated multi-parameter condition index indicates elevated degradation risk. ML Trajectory estimated critical window: ${model.degradationProgression.timeToCriticalHours} hrs.`,
+        message: `The derived degradation-risk index has reached the configured alert threshold. Current simulated progression window: ${model.degradationProgression.timeToCriticalHours} hrs.`,
         metricType: 'RISK_SCORE',
         category: 'DERIVED',
         directOrModel: 'DERIVED',
         thresholdValue: 'Risk Score > 70',
         actualValue: `${model.riskScore} / 100 (${model.degradationRisk})`,
         acknowledged: false,
-        scientificImpact: 'Calculated kinetic drift indicates accelerating environmental stagnation and growth suitability.',
+        scientificImpact: 'The derived risk index indicates a stronger degradation tendency based on the current temperature and pH time-series behaviour.',
       });
     }
   });
@@ -582,13 +582,13 @@ export function generateSystemHealth(dataSource: 'SIMULATED DATA' | 'ESP32 LIVE'
   return {
     esp32NodeStatus: 'ALL_ONLINE',
     esp32ActiveNodesCount: 1, // 1 Prototype Hardware Node Active
-    esp32TotalNodesCount: RESEARCH_NODES.length, // 1 Prototype Node + 4 Simulated Nodes
+    esp32TotalNodesCount: RESEARCH_NODES.length, // Current research prototype contains one physical monitoring node.
     backendApiStatus: dataSource === 'ESP32 LIVE' ? 'CONNECTED' : 'SIMULATED_PROXY',
     backendLatencyMs: dataSource === 'ESP32 LIVE' ? 42 : 8,
     historicalDatabaseStatus: 'HEALTHY',
     dataPreprocessingStatus: 'ACTIVE',
     transformerServiceStatus: 'ACTIVE_INFERENCE',
-    gnnServiceStatus: 'ACTIVE_INFERENCE',
+    gnnServiceStatus: 'CONVERGING',
     predictionLayerStatus: 'OPERATIONAL',
     lastModelInferenceTimestamp: new Date().toISOString(),
     inferenceTimeMs: 0,
