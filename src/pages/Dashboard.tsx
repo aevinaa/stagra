@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTelemetry } from '../context/TelemetryContext';
 import { CurrentWaterConditionCard } from '../components/dashboard/CurrentWaterConditionCard';
-import { DirectSensorCards } from '../components/dashboard/DirectSensorCards';
+import { DirectSensorPanel } from '../components/dashboard/DirectSensorPanel';
 import { ActiveTelemetryStreamChart } from '../components/dashboard/ActiveTelemetryStreamChart';
 import { DegradationForecastCard } from '../components/dashboard/DegradationForecastCard';
-import { RecentAlertsCard } from '../components/dashboard/RecentAlertsCard';
+import { QuickAlertsTicker } from '../components/dashboard/QuickAlertsTicker';
 import { CompactSystemHealth } from '../components/dashboard/CompactSystemHealth';
-import { MapPin, RefreshCw, Play, Pause } from 'lucide-react';
+import { MapPin, Radio, RefreshCw } from 'lucide-react';
 import { formatTimeWithIST } from '../utils/dateUtils';
 import clsx from 'clsx';
 
@@ -26,91 +26,201 @@ export const Dashboard: React.FC = () => {
     lastUpdated,
   } = useTelemetry();
 
+  const nodeName = activeNode?.name || 'Prototype Node 01';
+  const nodeCode = activeNode?.code || 'STG-PROTO-01';
+  const waterBodyType =
+    activeNode?.waterBodyType || 'Prototype Water Sampling Site';
+
   return (
     <div className="space-y-6 pb-12">
-      
-      {/* 1. DASHBOARD HEADER: Clean, focused station & streaming header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#090f1a] border border-slate-800 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-800/60 text-cyan-400">
-            <MapPin className="w-4 h-4" />
+
+      {/* =========================================================
+          DASHBOARD HEADER
+          ========================================================= */}
+      <section className="rounded-xl bg-[#090f1a] border border-slate-800 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+
+          {/* Prototype identity */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-lg bg-cyan-950/60 border border-cyan-800/60 text-cyan-400 shrink-0">
+              <MapPin className="w-5 h-5" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold font-mono text-slate-100 truncate">
+                  {nodeName}
+                </h1>
+
+                <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 font-mono text-[10px] font-semibold">
+                  {nodeCode}
+                </span>
+
+                <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono text-[10px]">
+                  {waterBodyType}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Single physical prototype monitoring node · Temperature + pH
+              </p>
+            </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold font-mono text-slate-100">
-                {activeNode?.name || 'Prototype Station 01'}
-              </h2>
-              <span className="px-1.5 py-0.2 rounded bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 font-mono text-[10px] font-semibold">
-                {activeNode?.code || 'NODE-01'}
-              </span>
-              <span className="hidden sm:inline-block px-1.5 py-0.2 rounded bg-slate-800/80 text-slate-300 font-mono text-[10px]">
-                {activeNode?.waterBodyType || 'Retention Pond'}
+
+          {/* Status / controls */}
+          <div className="flex items-center gap-2 sm:gap-3">
+
+            <div className="hidden md:block text-right font-mono">
+              <div className="text-[9px] text-slate-500 uppercase tracking-wider">
+                Last telemetry
+              </div>
+              <div className="text-[11px] text-slate-200 font-semibold">
+                {formatTimeWithIST(lastUpdated)}
+              </div>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#0d1522] border border-slate-700 font-mono text-[10px]">
+              <span
+                className={clsx(
+                  'w-2 h-2 rounded-full',
+                  isLiveStreaming
+                    ? 'bg-emerald-400 animate-pulse'
+                    : 'bg-slate-500'
+                )}
+              />
+
+              <span className="text-slate-300">
+                {isLiveStreaming ? 'LIVE STREAM' : 'PAUSED'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-sans mt-0.5">
-              Active physical telemetry ingestion and degradation risk tracking
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3 text-xs font-mono">
-          <div className="text-right hidden md:block">
-            <div className="text-[10px] text-slate-400">TELEMETRY LAST UPDATED</div>
-            <div className="text-slate-200 font-semibold text-[11px]">{formatTimeWithIST(lastUpdated)}</div>
-          </div>
-
-          <div className="flex items-center gap-1.5 border-l border-slate-800 pl-3">
             <button
               onClick={() => setIsLiveStreaming(!isLiveStreaming)}
               className={clsx(
-                'flex items-center gap-1 px-2.5 py-1 rounded-md border text-[11px] transition-colors',
+                'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border font-mono text-[10px] transition-colors',
                 isLiveStreaming
-                  ? 'bg-teal-950/70 text-teal-300 border-teal-700/60 hover:bg-teal-900/60'
-                  : 'bg-amber-950/70 text-amber-300 border-amber-700/60 hover:bg-amber-900/60'
+                  ? 'bg-emerald-950/40 border-emerald-700/50 text-emerald-300 hover:bg-emerald-950/60'
+                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
               )}
-              title={isLiveStreaming ? 'Pause streaming' : 'Resume live stream'}
             >
-              {isLiveStreaming ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 text-amber-400" />}
-              <span>{isLiveStreaming ? 'Live' : 'Paused'}</span>
+              <Radio className="w-3.5 h-3.5" />
+              {isLiveStreaming ? 'Pause' : 'Resume'}
             </button>
 
             <button
               onClick={triggerManualSample}
-              className="p-1 rounded-md bg-[#0d1624] border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 transition-colors"
-              title="Force immediate telemetry poll"
+              className="p-1.5 rounded-lg border border-slate-700 bg-[#0d1522] text-slate-400 hover:text-cyan-300 hover:border-cyan-700/60 transition-colors"
+              title="Refresh telemetry"
+              aria-label="Refresh telemetry"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
+
           </div>
         </div>
-      </div>
 
-      {/* 2. CURRENT WATER CONDITION & DEGRADATION RISK (Answers Questions 2 & 4) */}
-      <section>
-        <CurrentWaterConditionCard model={latestModel} node={activeNode} />
-      </section>
+        {/* Data mode strip */}
+        <div className="mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono">
+          <span className="flex items-center gap-1.5">
+            <span
+              className={clsx(
+                'w-1.5 h-1.5 rounded-full',
+                dataSourceMode === 'SIMULATED DATA'
+                  ? 'bg-amber-400'
+                  : 'bg-emerald-400'
+              )}
+            />
+            <span className="text-slate-500">DATA SOURCE</span>
+            <strong
+              className={
+                dataSourceMode === 'SIMULATED DATA'
+                  ? 'text-amber-300'
+                  : 'text-emerald-300'
+              }
+            >
+              {dataSourceMode}
+            </strong>
+          </span>
 
-      {/* 3. THREE DIRECT SENSOR CARDS: Temperature, pH, TDS (Answers Question 1) */}
-      <section>
-        <DirectSensorCards reading={latestReading} node={activeNode} />
-      </section>
+          <span className="text-slate-700">•</span>
 
-      {/* 4. MAIN ENVIRONMENTAL TREND CHART (Answers Question 3) */}
-      <section>
-        <ActiveTelemetryStreamChart readings={historicalReadings} models={historicalModels} />
-      </section>
+          <span className="text-slate-500">
+            ACTIVE SENSORS:{' '}
+            <strong className="text-cyan-300">
+              TEMPERATURE / pH
+            </strong>
+          </span>
 
-      {/* 5 & 6. SPLIT GRID: Degradation Forecast & Recent Alerts (Answers Questions 4 & 5) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7">
-          <DegradationForecastCard model={latestModel} node={activeNode} />
+          <span className="text-slate-700">•</span>
+
+          <span className="text-slate-500">
+            NODE STATUS:{' '}
+            <strong className="text-emerald-300">
+              PROTOTYPE
+            </strong>
+          </span>
         </div>
-        <div className="lg:col-span-5">
-          <RecentAlertsCard alerts={alerts} onAcknowledge={acknowledgeAlert} />
-        </div>
-      </div>
+      </section>
 
-      {/* 7. COMPACT SYSTEM HEALTH */}
+
+      {/* =========================================================
+          CURRENT WATER CONDITION
+          ========================================================= */}
+      <section>
+        <CurrentWaterConditionCard
+          model={latestModel}
+          node={activeNode}
+        />
+      </section>
+
+
+      {/* =========================================================
+          DIRECT SENSOR TELEMETRY
+          ========================================================= */}
+      <section>
+        <DirectSensorPanel
+          reading={latestReading}
+          node={activeNode}
+        />
+      </section>
+
+
+      {/* =========================================================
+          ENVIRONMENTAL TREND + ALERTS
+          ========================================================= */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <div className="xl:col-span-2">
+          <ActiveTelemetryStreamChart
+            readings={historicalReadings}
+            models={historicalModels}
+          />
+        </div>
+
+        <div>
+          <QuickAlertsTicker
+            alerts={alerts}
+            onAcknowledge={acknowledgeAlert}
+          />
+        </div>
+
+      </section>
+
+
+      {/* =========================================================
+          DEGRADATION FORECAST
+          ========================================================= */}
+      <section>
+        <DegradationForecastCard
+          model={latestModel}
+          node={activeNode}
+        />
+      </section>
+
+
+      {/* =========================================================
+          COMPACT SYSTEM STATUS
+          ========================================================= */}
       <section>
         <CompactSystemHealth
           node={activeNode}

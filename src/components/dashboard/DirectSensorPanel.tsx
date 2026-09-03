@@ -162,7 +162,7 @@ export const DirectSensorPanel: React.FC<DirectSensorPanelProps> = ({ reading, n
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>
-            Active Hardware Register: <strong className="text-slate-200">ESP32 ADC1_CH0 (TDS), ADC1_CH3 (pH), GPIO4 1-Wire (Temp)</strong>
+            Active Hardware Register: <strong className="text-slate-200"> ADC1_CH3 (pH), GPIO4 1-Wire (Temp)</strong>
           </span>
         </div>
         <div className="text-[11px] text-slate-400 hidden sm:block">
