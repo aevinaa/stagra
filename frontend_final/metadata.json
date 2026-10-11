@@ -1,0 +1,6 @@
+{
+  "name": "Indoor Air Quality Monitoring & Prediction System",
+  "description": "Research-grade embedded systems environmental monitoring interface for ESP32 with temperature, humidity, and MQ135 sensor telemetry and predictive modeling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

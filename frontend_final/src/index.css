@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Page background */
+  --color-canvas: #EEF3F5;
+
+  /* Primary surface/card */
+  --color-surface: #FAFCFC;
+
+  /* Elevated/important surface */
+  --color-surface-elevated: #FFFFFF;
+
+  /* Secondary/inner surface */
+  --color-surface-subtle: #E8F0F2;
+
+  /* Sidebar */
+  --color-surface-sidebar: #F4F7F8;
+
+  /* Header */
+  --color-surface-header: #F8FAFB;
+
+  /* Border */
+  --color-border-subtle: #D5E0E4;
+
+  /* Typography / Text tokens */
+  --color-text-primary: #19323C;
+  --color-text-secondary: #607780;
+  --color-text-muted: #8A98A8;
+
+  /* Primary Accent: #176B87, Dark: #11566D */
+  --color-brand-blue: #176B87;
+  --color-brand-dark-blue: #11566D;
+  --color-brand-light-blue: #E8F2F6;
+
+  /* Teal / Environmental Accent: #167C80, Soft: #E5F4F3 */
+  --color-brand-teal: #167C80;
+  --color-brand-light-teal: #E5F4F3;
+
+  /* Air Quality Status Colors */
+  --color-status-low: #27845A;
+  --color-status-low-bg: #EEF8F2;
+
+  --color-status-mod: #C47A13;
+  --color-status-mod-bg: #FFF8E8;
+
+  --color-status-high: #C94343;
+  --color-status-high-bg: #FDF0F0;
+
+  --radius-card: 12px;
+  --radius-panel: 14px;
+  --radius-control: 8px;
+
+  /* Subtle shadow: ~ 0 1px 3px rgba(25, 50, 60, 0.05) */
+  --shadow-subtle: 0 1px 3px rgba(25, 50, 60, 0.05);
+}
+
+:root {
+  --bg-canvas: #EEF3F5;
+  --surface-primary: #FAFCFC;
+  --surface-elevated: #FFFFFF;
+  --surface-secondary: #E8F0F2;
+  --surface-sidebar: #F4F7F8;
+  --surface-header: #F8FAFB;
+  --border-color: #D5E0E4;
+
+  --text-primary: #19323C;
+  --text-secondary: #607780;
+  --text-muted: #8A98A8;
+
+  --primary-accent: #176B87;
+  --primary-dark: #11566D;
+  --primary-light: #E8F2F6;
+
+  --teal: #167C80;
+  --soft-teal: #E5F4F3;
+
+  --status-low: #27845A;
+  --status-low-bg: #EEF8F2;
+  --status-mod: #C47A13;
+  --status-mod-bg: #FFF8E8;
+  --status-high: #C94343;
+  --status-high-bg: #FDF0F0;
+}
+
+body {
+  margin: 0;
+  background-color: #EEF3F5;
+  color: #19323C;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography scale utilities aligned with technical design guidelines */
+.type-page-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: #19323C;
+}
+
+.type-section-heading {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #19323C;
+}
+
+.type-card-heading {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: #19323C;
+}
+
+.type-metric-large {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: #19323C;
+}
+
+.type-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #607780;
+}
+
+.type-metadata {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #8A98A8;
+}
+
+.type-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scientific panel subtle shadow: 0 1px 3px rgba(25, 50, 60, 0.05) */
+.shadow-subtle {
+  box-shadow: 0 1px 3px rgba(25, 50, 60, 0.05);
+}
