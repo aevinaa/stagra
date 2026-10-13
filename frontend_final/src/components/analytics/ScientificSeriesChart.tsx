@@ -9,7 +9,6 @@ interface ScientificSeriesChartProps {
   unit: string;
   strokeColor: string; // #176B87 (temp), #167C80 (humidity), #C47A13 (mq135)
   data: HistoricalReading[];
-  showClassificationBands?: boolean;
   className?: string;
   height?: number;
 }
@@ -21,7 +20,6 @@ export function ScientificSeriesChart({
   unit,
   strokeColor,
   data,
-  showClassificationBands = false,
   className = '',
   height = 220,
 }: ScientificSeriesChartProps) {
@@ -52,12 +50,6 @@ export function ScientificSeriesChart({
   let minVal = Math.floor(minObserved * 0.98);
   let maxVal = Math.ceil(maxObserved * 1.02);
 
-  // If showing MQ135 classification bands (250 and 350), extend scale so thresholds are clearly visible if data is near
-  if (showClassificationBands) {
-    minVal = Math.min(minVal, 150);
-    maxVal = Math.max(maxVal, 380);
-  }
-
   // Prevent zero divide
   const valRange = maxVal - minVal || 1;
 
@@ -70,7 +62,8 @@ export function ScientificSeriesChart({
   // Compute coordinate points
   const points = data.map((d, i) => {
     const val = d[metricKey];
-    const x = padding.left + (i / (data.length - 1)) * chartW;
+    const x =
+      data.length > 1 ? padding.left + (i / (data.length - 1)) * chartW : padding.left + chartW / 2;
     const y = padding.top + chartH - ((val - minVal) / valRange) * chartH;
     return { x, y, val, reading: d };
   });
@@ -79,17 +72,6 @@ export function ScientificSeriesChart({
   const pathD = points.reduce((acc, curr, idx) => {
     return idx === 0 ? `M ${curr.x} ${curr.y}` : `${acc} L ${curr.x} ${curr.y}`;
   }, '');
-
-  // Calculate threshold Y positions if requested
-  const yLowThreshold =
-    showClassificationBands && 250 >= minVal && 250 <= maxVal
-      ? padding.top + chartH - ((250 - minVal) / valRange) * chartH
-      : null;
-
-  const yHighThreshold =
-    showClassificationBands && 350 >= minVal && 350 <= maxVal
-      ? padding.top + chartH - ((350 - minVal) / valRange) * chartH
-      : null;
 
   const formatTimestamp = (iso: string) => {
     try {
@@ -201,28 +183,6 @@ export function ScientificSeriesChart({
             </linearGradient>
           </defs>
 
-          {/* Classification Zones Background (for MQ135) */}
-          {showClassificationBands && yLowThreshold && yHighThreshold && (
-            <g className="opacity-40">
-              {/* Moderate Band between 250 and 350 */}
-              <rect
-                x={padding.left}
-                y={yHighThreshold}
-                width={chartW}
-                height={Math.max(0, yLowThreshold - yHighThreshold)}
-                fill="#FFF8E8"
-              />
-              {/* High Band above 350 */}
-              <rect
-                x={padding.left}
-                y={padding.top}
-                width={chartW}
-                height={Math.max(0, yHighThreshold - padding.top)}
-                fill="#FDF0F0"
-              />
-            </g>
-          )}
-
           {/* Subtle Horizontal Grid lines & Y-axis labels */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
             const y = padding.top + chartH * ratio;
@@ -250,53 +210,6 @@ export function ScientificSeriesChart({
               </g>
             );
           })}
-
-          {/* Project-Defined Threshold Lines (for MQ135) */}
-          {showClassificationBands && yLowThreshold && (
-            <g>
-              <line
-                x1={padding.left}
-                y1={yLowThreshold}
-                x2={width - padding.right}
-                y2={yLowThreshold}
-                stroke="#C47A13"
-                strokeDasharray="4 2"
-                strokeWidth="1.2"
-                strokeOpacity="0.8"
-              />
-              <text
-                x={width - padding.right}
-                y={yLowThreshold - 4}
-                textAnchor="end"
-                className="text-[9px] fill-[#C47A13] font-mono font-medium"
-              >
-                Threshold Low/Mod (250)
-              </text>
-            </g>
-          )}
-
-          {showClassificationBands && yHighThreshold && (
-            <g>
-              <line
-                x1={padding.left}
-                y1={yHighThreshold}
-                x2={width - padding.right}
-                y2={yHighThreshold}
-                stroke="#C94343"
-                strokeDasharray="4 2"
-                strokeWidth="1.2"
-                strokeOpacity="0.8"
-              />
-              <text
-                x={width - padding.right}
-                y={yHighThreshold - 4}
-                textAnchor="end"
-                className="text-[9px] fill-[#C94343] font-mono font-medium"
-              >
-                Threshold Mod/High (350)
-              </text>
-            </g>
-          )}
 
           {/* Area fill */}
           {points.length > 0 && (
@@ -391,7 +304,7 @@ export function ScientificSeriesChart({
             y={(activePoint.y / height) * 100}
             isPercentagePosition={true}
             title={formatFullTimestamp(activePoint.reading.timestamp)}
-            subtitle={`Ground Truth Telemetry · ${sensorLabel || 'Sensor'}`}
+            subtitle={`Stored reading · ${sensorLabel || 'Sensor'}`}
             seriesType="observed"
             items={[
               {
@@ -425,45 +338,16 @@ export function ScientificSeriesChart({
                     {
                       label: 'MQ135 Gas',
                       value: Math.round(activePoint.reading.mq135),
-                      unit: 'sensor units',
+                      unit: 'raw units',
                       color: '#C47A13',
                     },
                   ]
                 : []),
-              {
-                label: 'Air Quality Level',
-                value: activePoint.reading.airQuality,
-                badge: activePoint.reading.airQuality,
-                badgeColor:
-                  activePoint.reading.airQuality === 'Low'
-                    ? '#27845A'
-                    : activePoint.reading.airQuality === 'Moderate'
-                    ? '#C47A13'
-                    : '#C94343',
-                badgeBg:
-                  activePoint.reading.airQuality === 'Low'
-                    ? '#EEF8F2'
-                    : activePoint.reading.airQuality === 'Moderate'
-                    ? '#FFF8E8'
-                    : '#FDF0F0',
-              },
             ]}
-            footer={
-              showClassificationBands
-                ? 'MQ135 raw sensor units with preliminary lab thresholds'
-                : 'Concurrent readings recorded at this historical point'
-            }
+            footer="Concurrent readings recorded at this historical point"
           />
         )}
       </div>
-
-      {/* Footnote for Preliminary Thresholds */}
-      {showClassificationBands && (
-        <div className="mt-2 pt-2 border-t border-[#D5E0E4] text-[11px] text-[#8A98A8] flex flex-wrap items-center justify-between font-mono">
-          <span>* Project-defined preliminary thresholds: Low (&lt;250) · Moderate (250–350) · High (&gt;350)</span>
-          <span>Raw sensor units (not an official regulatory AQI)</span>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { getModelComparison } from '../services/api';
 import { ModelComparisonResult } from '../types';
 import { ChartTooltip } from '../components/ui/ChartTooltip';
+import { DataNotice } from '../components/common/DataNotice';
 import {
   Award,
   Info,
@@ -62,6 +63,8 @@ export function ModelsView() {
   const [models, setModels] = useState<ModelComparisonResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // True when the API layer reports that no model results exist (real mode, nothing evaluated yet)
+  const [isUnavailable, setIsUnavailable] = useState(false);
 
   // Selected primary metric for ranking the best performing candidate
   const [primaryMetric, setPrimaryMetric] = useState<EvaluationMetricKey>('accuracy');
@@ -72,7 +75,8 @@ export function ModelsView() {
     setError(null);
     try {
       const data = await getModelComparison();
-      setModels(data);
+      setModels(data ?? []);
+      setIsUnavailable(data === null);
     } catch (err: any) {
       console.error('Failed to load model comparison:', err);
       setError('Unable to load model evaluation benchmarks from service.');
@@ -89,6 +93,23 @@ export function ModelsView() {
     return (
       <div className="py-24 text-center">
         <p className="type-body text-[#607780] font-mono">Loading model evaluation benchmarks...</p>
+      </div>
+    );
+  }
+
+  if (isUnavailable) {
+    return (
+      <div className="space-y-6">
+        <div className="pb-3 border-b border-[#D5E0E4]">
+          <h2 className="type-page-title text-[#19323C]">Model Comparison</h2>
+          <p className="type-body text-[#607780] mt-0.5">
+            Evaluation results for machine learning models trained on real sensor data.
+          </p>
+        </div>
+        <DataNotice variant="unavailable" title="No evaluated models yet">
+          No model has been trained and evaluated on held-out real sensor data, so there are no model
+          metrics to compare. Results will appear here only after a model has been evaluated.
+        </DataNotice>
       </div>
     );
   }

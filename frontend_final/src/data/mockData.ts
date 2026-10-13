@@ -33,7 +33,8 @@ export function classifyAirQuality(mq135Value: number): AirQualityLevel {
 }
 
 /**
- * Realistic continuous telemetry generator for ESP32 + DHT22 + MQ135 stream.
+ * MOCK telemetry generator (demo data only, NOT sensor data) imitating an ESP32 +
+ * DS18B20 + DHT11 + MQ135 stream.
  *
  * Simulates physical indoor environmental characteristics:
  * 1. Chronological timestamps strictly ordered.
@@ -111,7 +112,6 @@ export function generateRealisticHistory(
       temperature: cleanTemp,
       humidity: cleanHum,
       mq135: cleanGas,
-      airQuality: classifyAirQuality(cleanGas),
     });
   }
 
@@ -124,7 +124,7 @@ export function generateRealisticHistory(
  * 1. Latest historical reading === current conditions.
  * 2. Prediction input is derived strictly from current sensor state.
  * 3. Last update timestamp matches the latest packet.
- * 4. Air quality classification matches the MQ135 threshold logic.
+ * 4. Demo forecast classifications use the project's mock-only MQ135 thresholds.
  */
 class TelemetrySimulationEngine {
   private latestPacketTime: number = Date.now();
@@ -147,7 +147,7 @@ class TelemetrySimulationEngine {
     this.historyCache = generateRealisticHistory(24, 15, now);
 
     // 2. The latest reading in history is the definitive reference for current state
-    // Let's ensure the current moment reflects Room 204's active occupancy condition
+    // Mock "current" moment with a fixed demo state
     // (gradual steady values: e.g. 27.4°C, 64.2% RH, 318 sensor units)
     const latestHistorical = this.historyCache[this.historyCache.length - 1];
 
@@ -155,14 +155,12 @@ class TelemetrySimulationEngine {
     const currentTemp = 27.4;
     const currentHum = 64.2;
     const currentMq135 = 318;
-    const currentAqi = classifyAirQuality(currentMq135); // 318 is Moderate (250 <= 318 <= 350)
 
     // Synchronize latest historical reading with current state
     latestHistorical.timestamp = new Date(now).toISOString();
     latestHistorical.temperature = currentTemp;
     latestHistorical.humidity = currentHum;
     latestHistorical.mq135 = currentMq135;
-    latestHistorical.airQuality = currentAqi;
 
     // Smooth previous historical point so there is no sudden jump leading into 27.4 / 64.2 / 318
     if (this.historyCache.length >= 2) {
@@ -170,7 +168,6 @@ class TelemetrySimulationEngine {
       prev.temperature = Number((currentTemp - 0.2).toFixed(1)); // 27.2
       prev.humidity = Number((currentHum - 0.4).toFixed(1)); // 63.8
       prev.mq135 = currentMq135 - 7; // 311
-      prev.airQuality = classifyAirQuality(prev.mq135);
     }
 
     // 3. Current Conditions
@@ -178,16 +175,12 @@ class TelemetrySimulationEngine {
       temperature: currentTemp,
       humidity: currentHum,
       mq135: currentMq135,
-      airQuality: currentAqi,
       timestamp: latestHistorical.timestamp,
       occupancy: 'Moderate',
       ventilation: 'Low',
       occupancyInferred: false,
       ventilationInferred: false,
-      sensorStatus: {
-        dht22: 'Operational',
-        mq135: 'Operational',
-      },
+      location: 'Demo data (mock)',
     };
 
     // 4. Prediction: strictly seeded from the current conditions
@@ -296,14 +289,12 @@ class TelemetrySimulationEngine {
       last.temperature = this.currentConditionsCache.temperature;
       last.humidity = this.currentConditionsCache.humidity;
       last.mq135 = this.currentConditionsCache.mq135;
-      last.airQuality = this.currentConditionsCache.airQuality;
 
       if (series.length >= 2) {
         const prev = series[series.length - 2];
         prev.temperature = Number((this.currentConditionsCache.temperature - 0.2).toFixed(1));
         prev.humidity = Number((this.currentConditionsCache.humidity - 0.4).toFixed(1));
         prev.mq135 = this.currentConditionsCache.mq135 - 7;
-        prev.airQuality = classifyAirQuality(prev.mq135);
       }
     }
     return series;
@@ -317,16 +308,11 @@ class TelemetrySimulationEngine {
   public getSystemStatus(): SystemStatus {
     this.refreshIfStale();
     return {
+      dataStatus: 'receiving',
       esp32Connected: true,
       lastPacketTime: this.currentConditionsCache!.timestamp,
-      sensorStatus: {
-        dht22: 'Operational',
-        mq135: 'Operational',
-      },
-      mcuNode: 'ESP32 DevKit-V1',
       samplingIntervalSeconds: 5,
-      room: 'Room 204',
-      activeSensors: ['DHT22 (Temp/Hum)', 'MQ135 (Gas)'],
+      room: 'Demo data (mock)',
     };
   }
 }

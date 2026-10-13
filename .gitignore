@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+data/*.db
+data/*.db-journal
+.env
+.env.*
+!.env.example
+**/node_modules/

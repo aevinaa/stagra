@@ -27,6 +27,7 @@ export default function App() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [statusUnavailable, setStatusUnavailable] = useState(false);
 
   // Poll or load initial system status from backend service
   useEffect(() => {
@@ -34,9 +35,17 @@ export default function App() {
     const fetchStatus = async () => {
       try {
         const status = await getSystemStatus();
-        if (isMounted) setSystemStatus(status);
+        if (isMounted) {
+          setSystemStatus(status);
+          setStatusUnavailable(false);
+        }
       } catch (err) {
         console.error('Failed to query system status:', err);
+        if (isMounted) {
+          // Never keep showing an old status after a failed poll.
+          setSystemStatus(null);
+          setStatusUnavailable(true);
+        }
       }
     };
 
@@ -96,8 +105,9 @@ export default function App() {
         <Header
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
           title="Indoor Air Quality Monitoring"
-          room="Room 204"
+          room={systemStatus?.room ?? null}
           systemStatus={systemStatus}
+          statusUnavailable={statusUnavailable}
         />
 
         {/* Content Container */}

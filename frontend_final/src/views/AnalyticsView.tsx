@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getHistoricalReadings } from '../services/api';
-import { HistoricalReading, TimeRange } from '../types';
+import { getHistoricalReadings, IS_MOCK_MODE } from '../services/api';
+import { HistoryResult, TimeRange } from '../types';
 import { ScientificSeriesChart } from '../components/analytics/ScientificSeriesChart';
-import { AirQualityTimeline } from '../components/analytics/AirQualityTimeline';
+import { DataNotice, ApiErrorNotice, HistoryMetaNote } from '../components/common/DataNotice';
 import { RefreshCw, Database } from 'lucide-react';
 
 export function AnalyticsView() {
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
-  const [data, setData] = useState<HistoricalReading[]>([]);
+  const [result, setResult] = useState<HistoryResult | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -15,9 +16,12 @@ export function AnalyticsView() {
     setIsRefreshing(true);
     try {
       const records = await getHistoricalReadings(range);
-      setData(records);
+      setResult(records);
+      setError(null);
     } catch (err) {
       console.error('Failed to load historical analytics telemetry:', err);
+      setResult(null);
+      setError(err);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -35,15 +39,17 @@ export function AnalyticsView() {
   const getTimeRangeLabel = (range: TimeRange) => {
     switch (range) {
       case '1h':
-        return 'Past 1 Hour';
+        return IS_MOCK_MODE ? 'Past 1 Hour' : 'Last 1 Hour of Stored Data';
       case '6h':
-        return 'Past 6 Hours';
+        return IS_MOCK_MODE ? 'Past 6 Hours' : 'Last 6 Hours of Stored Data';
       case '24h':
-        return 'Past 24 Hours';
+        return IS_MOCK_MODE ? 'Past 24 Hours' : 'Last 24 Hours of Stored Data';
       default:
         return 'Selected Window';
     }
   };
+
+  const data = result?.readings ?? [];
 
   return (
     <div className="space-y-6">
@@ -110,11 +116,18 @@ export function AnalyticsView() {
       {/* 2. SCIENTIFIC CONTEXT BANNER */}
       <div className="p-3.5 rounded-[8px] bg-[#E8F0F2] border border-[#D5E0E4] text-xs text-[#607780] flex items-start gap-2.5 shadow-subtle">
         <Database className="w-4 h-4 text-[#167C80] shrink-0 mt-0.5" />
-        <div>
-          <span className="font-semibold text-[#19323C]">
-            Historical Telemetry Buffer ({getTimeRangeLabel(timeRange)}):{' '}
-          </span>
-          Sensors sample at continuous fixed intervals. MQ135 readings are recorded in raw sensor units (not an official regulatory AQI). Threshold classifications (Low &lt;250, Moderate 250–350, High &gt;350) represent preliminary project-defined thresholds until site-specific chemical calibration is performed.
+        <div className="space-y-1">
+          <div>
+            <span className="font-semibold text-[#19323C]">
+              Historical Telemetry ({getTimeRangeLabel(timeRange)}):{' '}
+            </span>
+            {IS_MOCK_MODE
+              ? 'Demo data generated in the browser; it is not sensor data. '
+              : 'Stored readings, oldest first. '}
+            MQ135 values are raw, uncalibrated sensor readings (not ppm, CO₂ or AQI), and no air-quality
+            classification is applied.
+          </div>
+          <HistoryMetaNote meta={result?.meta} />
         </div>
       </div>
 
@@ -122,13 +135,20 @@ export function AnalyticsView() {
         <div className="py-24 text-center">
           <p className="type-body text-[#607780] font-mono">Loading telemetry time series...</p>
         </div>
+      ) : error ? (
+        <ApiErrorNotice error={error} onRetry={() => loadData(timeRange)} />
+      ) : data.length === 0 ? (
+        <DataNotice variant="empty" title="No readings in this window">
+          No stored readings were found for the selected window. If the database is empty, readings will
+          appear here once the ESP32 has posted data to the backend.
+        </DataNotice>
       ) : (
         <div className="space-y-6">
           {/* 1. TEMPERATURE OVER TIME */}
           <section aria-labelledby="chart-temp-title">
             <ScientificSeriesChart
               title="Temperature Over Time"
-              sensorLabel="DHT22 Digital Sensor"
+              sensorLabel="DS18B20 Temperature Sensor"
               metricKey="temperature"
               unit="°C"
               strokeColor="#176B87"
@@ -140,7 +160,7 @@ export function AnalyticsView() {
           <section aria-labelledby="chart-hum-title">
             <ScientificSeriesChart
               title="Humidity Over Time"
-              sensorLabel="DHT22 Digital Sensor"
+              sensorLabel="DHT11 Humidity Sensor"
               metricKey="humidity"
               unit="% RH"
               strokeColor="#167C80"
@@ -152,18 +172,12 @@ export function AnalyticsView() {
           <section aria-labelledby="chart-mq135-title">
             <ScientificSeriesChart
               title="MQ135 Readings Over Time"
-              sensorLabel="MQ135 Gas Sensor"
+              sensorLabel="MQ135 Gas Sensor (raw)"
               metricKey="mq135"
-              unit="sensor units"
+              unit="raw units"
               strokeColor="#C47A13"
               data={data}
-              showClassificationBands={true}
             />
-          </section>
-
-          {/* 4. AIR QUALITY CLASSIFICATION TIMELINE & DISTRIBUTION */}
-          <section aria-labelledby="classification-timeline-title">
-            <AirQualityTimeline data={data} />
           </section>
         </div>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { HistoricalReading, AirQualityPrediction } from '../../types';
+import { HistoricalReading, AirQualityPrediction, AirQualityLevel } from '../../types';
 import { ChartTooltip } from '../ui/ChartTooltip';
 
 interface PredictionTrendChartProps {
@@ -405,18 +405,18 @@ export function PredictionTrendChart({
                     },
                     {
                       label: 'Predicted Level',
-                      value: activePoint.item.airQuality,
-                      badge: activePoint.item.airQuality,
+                      value: (activePoint.item as { airQuality: AirQualityLevel }).airQuality,
+                      badge: (activePoint.item as { airQuality: AirQualityLevel }).airQuality,
                       badgeColor:
-                        activePoint.item.airQuality === 'Low'
+                        (activePoint.item as { airQuality: AirQualityLevel }).airQuality === 'Low'
                           ? '#27845A'
-                          : activePoint.item.airQuality === 'Moderate'
+                          : (activePoint.item as { airQuality: AirQualityLevel }).airQuality === 'Moderate'
                           ? '#C47A13'
                           : '#C94343',
                       badgeBg:
-                        activePoint.item.airQuality === 'Low'
+                        (activePoint.item as { airQuality: AirQualityLevel }).airQuality === 'Low'
                           ? '#EEF8F2'
-                          : activePoint.item.airQuality === 'Moderate'
+                          : (activePoint.item as { airQuality: AirQualityLevel }).airQuality === 'Moderate'
                           ? '#FFF8E8'
                           : '#FDF0F0',
                     },
@@ -436,23 +436,6 @@ export function PredictionTrendChart({
                       value: Math.round(activePoint.val),
                       unit: 'sensor units',
                       color: '#176B87',
-                    },
-                    {
-                      label: 'Air Quality Level',
-                      value: (activePoint.item as HistoricalReading).airQuality,
-                      badge: (activePoint.item as HistoricalReading).airQuality,
-                      badgeColor:
-                        (activePoint.item as HistoricalReading).airQuality === 'Low'
-                          ? '#27845A'
-                          : (activePoint.item as HistoricalReading).airQuality === 'Moderate'
-                          ? '#C47A13'
-                          : '#C94343',
-                      badgeBg:
-                        (activePoint.item as HistoricalReading).airQuality === 'Low'
-                          ? '#EEF8F2'
-                          : (activePoint.item as HistoricalReading).airQuality === 'Moderate'
-                          ? '#FFF8E8'
-                          : '#FDF0F0',
                     },
                     {
                       label: 'Temperature',

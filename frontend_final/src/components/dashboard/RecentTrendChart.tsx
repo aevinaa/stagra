@@ -44,7 +44,10 @@ export function RecentTrendChart({ data, className = '' }: RecentTrendChartProps
 
   const points = displayPoints.map((d, i) => {
     const val = activeMetric === 'mq135' ? d.mq135 : activeMetric === 'temperature' ? d.temperature : d.humidity;
-    const x = padding.left + (i / (displayPoints.length - 1)) * chartW;
+    const x =
+      displayPoints.length > 1
+        ? padding.left + (i / (displayPoints.length - 1)) * chartW
+        : padding.left + chartW / 2;
     const y = padding.top + chartH - ((val - minVal) / valRange) * chartH;
     return { x, y, val, item: d };
   });
@@ -83,8 +86,8 @@ export function RecentTrendChart({ data, className = '' }: RecentTrendChartProps
   const metricConfig = {
     mq135: {
       color: '#C47A13', // Moderate / amber accent for MQ135
-      unit: 'sensor units',
-      label: 'MQ135 Gas Sensor',
+      unit: 'raw units',
+      label: 'MQ135 Gas Sensor (raw)',
     },
     temperature: {
       color: '#176B87', // Primary Accent
@@ -337,28 +340,11 @@ export function RecentTrendChart({ data, className = '' }: RecentTrendChartProps
                     {
                       label: 'MQ135 Gas',
                       value: Math.round(activePoint.item.mq135),
-                      unit: 'sensor units',
+                      unit: 'raw units',
                       color: '#C47A13',
                     },
                   ]
                 : []),
-              {
-                label: 'Air Quality Level',
-                value: activePoint.item.airQuality,
-                badge: activePoint.item.airQuality,
-                badgeColor:
-                  activePoint.item.airQuality === 'Low'
-                    ? '#27845A'
-                    : activePoint.item.airQuality === 'Moderate'
-                    ? '#C47A13'
-                    : '#C94343',
-                badgeBg:
-                  activePoint.item.airQuality === 'Low'
-                    ? '#EEF8F2'
-                    : activePoint.item.airQuality === 'Moderate'
-                    ? '#FFF8E8'
-                    : '#FDF0F0',
-              },
             ]}
             footer="Concurrent readings at this telemetry packet"
           />

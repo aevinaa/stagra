@@ -107,7 +107,7 @@ export function Sidebar({
           </div>
           <div className="text-[11px] font-mono text-[#8A98A8] flex items-center justify-between">
             <span>Sensors</span>
-            <span>DHT22 · MQ135</span>
+            <span>DS18B20 · DHT11 · MQ135</span>
           </div>
         </div>
       </div>
