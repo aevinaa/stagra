@@ -1,10 +1,89 @@
+
+# =========================
+# Python
+# =========================
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*.pyd
 .pytest_cache/
-data/*.db
-data/*.db-journal
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python environment / secrets
 .env
 .env.*
 !.env.example
-**/node_modules/
+!.env.*.example
+
+# =========================
+# Frontend
+# =========================
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Local frontend environment files
+frontend/.env
+frontend_final/.env
+frontend/.env.*
+frontend_final/.env.*
+!frontend/.env.example
+!frontend_final/.env.example
+
+# =========================
+# Databases and local data
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Temporary / generated data
+data/raw/
+data/interim/
+data/processed/
+
+# =========================
+# Trained model artifacts
+# =========================
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+*.joblib
+*.pkl
+*.pickle
+*.safetensors
+
+# Keep model directories' source/config files,
+# but ignore generated weights and checkpoints.
+models/**/checkpoints/
+models/**/runs/
+
+# =========================
+# Logs and temporary files
+# =========================
+*.log
+logs/
+tmp/
+temp/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Editors
+# =========================
+.vscode/
+.idea/

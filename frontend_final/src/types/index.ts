@@ -172,3 +172,47 @@ export interface TelemetrySummary {
 
 // Re-export navigation types
 export * from './navigation';
+
+
+export interface DecisionAlert {
+  code: string;
+  severity: 'info' | 'caution';
+  title: string;
+  message: string;
+}
+
+export interface DecisionSupport {
+  assessmentStatus:
+    | 'no_data'
+    | 'stale'
+    | 'insufficient_history'
+    | 'available'
+    | 'synthetic_data';
+  generatedAt: string;
+  latestReadingAt: string | null;
+  dataAgeSeconds: number | null;
+  location: string | null;
+  experimentId: string | null;
+  isSynthetic: boolean | null;
+  readingsAnalyzed: number;
+  windowMinutes: number;
+  indoorComfortIndex: number | null;
+  comfortCategory:
+    | 'not_available'
+    | 'comfortable'
+    | 'mild_discomfort'
+    | 'high_discomfort';
+  comfortFactors: string[];
+  comfortConditionDurationMinutes: number | null;
+  respiratoryRiskIndex: number | null;
+  respiratoryRiskStatus: 'not_assessable_with_current_sensors';
+  exposureDurationMinutes: number | null;
+  mq135Trend:
+    | 'insufficient_history'
+    | 'stable'
+    | 'rising'
+    | 'falling';
+  alerts: DecisionAlert[];
+  recommendations: string[];
+  limitations: string[];
+}

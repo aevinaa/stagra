@@ -6,6 +6,7 @@ import {
   getCurrentConditions,
   getHistoricalReadings,
   getPrediction,
+  getDecisionSupport,
   isApiError,
   IS_MOCK_MODE,
 } from '../services/api';
@@ -13,6 +14,7 @@ import {
   CurrentConditions,
   HistoryResult,
   AirQualityPrediction,
+  DecisionSupport,
   AirQualityLevel,
 } from '../types';
 import {
@@ -76,14 +78,17 @@ export function DashboardView() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [decisionSupport, setDecisionSupport] = useState<DecisionSupport | null>(null);
+
 
   // Fetch telemetry from API layer
   const loadDashboardData = useCallback(async () => {
     setIsRefreshing(true);
-    const [cur, hist, pred] = await Promise.allSettled([
+    const [cur, hist, pred, assessment] = await Promise.allSettled([
       getCurrentConditions(),
       getHistoricalReadings('24h'),
       getPrediction(),
+      getDecisionSupport(),
     ]);
 
     if (hist.status === 'fulfilled') {
@@ -96,6 +101,8 @@ export function DashboardView() {
     }
 
     setPrediction(pred.status === 'fulfilled' ? pred.value : null);
+    setDecisionSupport(assessment.status === 'fulfilled' ? assessment.value : null,
+    );
 
     if (cur.status === 'fulfilled') {
       setConditions(cur.value);
@@ -178,6 +185,7 @@ export function DashboardView() {
           historyError={historyError}
           prediction={prediction}
           onRetry={loadDashboardData}
+          decisionSupport={decisionSupport}
         />
       ) : (
         <ApiErrorNotice error={loadError} onRetry={loadDashboardData} />
@@ -191,6 +199,7 @@ interface DashboardContentProps {
   history: HistoryResult | null;
   historyError: unknown;
   prediction: AirQualityPrediction | null;
+  decisionSupport: DecisionSupport | null;
   onRetry: () => void;
 }
 
@@ -199,6 +208,7 @@ function DashboardContent({
   history,
   historyError,
   prediction,
+  decisionSupport,
   onRetry,
 }: DashboardContentProps) {
   // Temperature baseline assessment (Displayed Target: 20.0–25.0 °C)
@@ -232,6 +242,108 @@ function DashboardContent({
 
   return (
     <>
+
+      {decisionSupport && (
+        <section aria-labelledby="assessment-heading">
+          <Card className="p-5">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <h3
+                  id="assessment-heading"
+                  className="type-card-heading text-[#19323C]"
+                >
+                  Indoor Comfort & Health-Aware Assessment
+                </h3>
+                <p className="type-metadata text-[#607780] mt-1">
+                  Based on stored readings; this is a project assessment, not a
+                  medical diagnosis.
+                </p>
+              </div>
+
+              <span className="text-xs font-mono px-3 py-1.5 rounded-md border border-[#E7C98A] bg-[#FFF8E8] text-[#C47A13]">
+                {decisionSupport.assessmentStatus.replaceAll('_', ' ').toUpperCase()}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+              <div className="rounded-lg border border-[#D5E0E4] bg-[#E8F0F2] p-4">
+                <p className="text-xs text-[#607780] uppercase tracking-wider">
+                  Indoor comfort score
+                </p>
+                <p className="text-3xl font-semibold font-mono text-[#19323C] mt-2">
+                  {decisionSupport.indoorComfortIndex == null
+                    ? '—'
+                    : `${decisionSupport.indoorComfortIndex}/100`}
+                </p>
+                <p className="text-sm text-[#607780] mt-1">
+                  {decisionSupport.comfortCategory.replaceAll('_', ' ')}
+                </p>
+                {decisionSupport.comfortFactors.map((factor, index) => (
+                  <p key={index} className="text-sm text-[#607780] mt-2">
+                    {factor}
+                  </p>
+                ))}
+              </div>
+
+              <div className="rounded-lg border border-[#D5E0E4] p-4">
+                <p className="text-xs text-[#607780] uppercase tracking-wider">
+                  Respiratory risk
+                </p>
+                <p className="text-base font-semibold text-[#19323C] mt-2">
+                  Not assessable with current sensors
+                </p>
+                <p className="text-sm text-[#607780] mt-2">
+                  The uncalibrated MQ135 reading cannot establish respiratory risk,
+                  pollutant concentration, or AQI.
+                </p>
+              </div>
+            </div>
+
+            {decisionSupport.alerts.length > 0 && (
+              <div className="mt-5">
+                <h4 className="text-sm font-semibold text-[#19323C] mb-2">
+                  Alerts
+                </h4>
+                <div className="space-y-2">
+                  {decisionSupport.alerts.map((alert) => (
+                    <div
+                      key={alert.code}
+                      className="rounded-lg border border-[#D5E0E4] p-3"
+                    >
+                      <p className="text-sm font-semibold text-[#19323C]">
+                        {alert.title}
+                      </p>
+                      <p className="text-sm text-[#607780] mt-1">
+                        {alert.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {decisionSupport.recommendations.length > 0 && (
+              <div className="mt-5">
+                <h4 className="text-sm font-semibold text-[#19323C] mb-2">
+                  Recommendations
+                </h4>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-[#607780]">
+                  {decisionSupport.recommendations.map((recommendation, index) => (
+                    <li key={index}>{recommendation}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="text-xs text-[#8A98A8] mt-5 pt-3 border-t border-[#D5E0E4]">
+              The comfort score is a project-defined heuristic, not a validated
+              medical or standards-compliant index.
+            </p>
+          </Card>
+        </section>
+      )}
+
+
       {/* 1. PRIMARY TELEMETRY CARDS (4 CARDS: Temperature, Humidity, Data Source, MQ135) */}
       <section aria-labelledby="primary-telemetry-heading">
         <h3 id="primary-telemetry-heading" className="sr-only">

@@ -1,0 +1,132 @@
+{
+  "schema": "airq.forecast_model",
+  "version": 1,
+  "model": {
+    "type": "gru",
+    "n_features": 3,
+    "hidden_size": 32,
+    "num_layers": 1,
+    "dropout": 0.0,
+    "output": "target value at origin + horizon, in scaled units (use the saved scaler to invert)"
+  },
+  "config": {
+    "seed": 0,
+    "model_type": "gru",
+    "hidden_size": 32,
+    "num_layers": 1,
+    "dropout": 0.0,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 5,
+    "min_delta": 0.0,
+    "grad_clip": 1.0,
+    "torch_threads": 1,
+    "device": "cpu"
+  },
+  "seed": 0,
+  "data": {
+    "feature_names": [
+      "temperature_c",
+      "humidity_percent",
+      "mq135_raw"
+    ],
+    "target_column": "mq135_raw",
+    "target_description": "raw sensor response of the MQ135 gas sensor as recorded (uncalibrated); not ppm, not CO2 concentration, not AQI",
+    "interval_seconds": 5,
+    "history_steps": 120,
+    "history_seconds": 600,
+    "horizon_steps": 120,
+    "horizon_seconds": 600,
+    "stride_steps": 1
+  },
+  "experiments": {
+    "train": [
+      "HW-002",
+      "HW-003"
+    ],
+    "validation": [
+      "HW-004"
+    ],
+    "test": [
+      "HW-005"
+    ]
+  },
+  "data_origin": {
+    "training": "real",
+    "validation": "real",
+    "synthetic_in_training": false
+  },
+  "scaling": {
+    "file": "scaler.json",
+    "fitted_on": "training split only",
+    "scaled_columns": [
+      "temperature_c",
+      "humidity_percent",
+      "mq135_raw"
+    ]
+  },
+  "training": {
+    "selection_metric": "validation MSE in scaled units",
+    "best_epoch": 1,
+    "best_val_loss": 0.7034855425481736,
+    "epochs_run": 6,
+    "stopped_early": true,
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 1.5978299215776757,
+        "val_loss": 0.7034855425481736
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.8775779571453896,
+        "val_loss": 2.2294860272794157
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.275390918051975,
+        "val_loss": 4.14269474786929
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.17673027942929098,
+        "val_loss": 1.7484861233130313
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.13992035427259517,
+        "val_loss": 1.5297079254832435
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.1339517267587403,
+        "val_loss": 1.1936784910808729
+      }
+    ],
+    "test_set_used": false
+  },
+  "validation_metrics_original_units": {
+    "n_windows": 481,
+    "mae": 27.156887316158556,
+    "rmse": 30.37071328538361,
+    "r2": -3.630632079208538,
+    "units": "raw mq135_raw sensor units"
+  },
+  "files": {
+    "model": "model.pt",
+    "scaler": "scaler.json",
+    "metadata": "metadata.json"
+  },
+  "environment": {
+    "python": "3.11.4",
+    "numpy": "2.4.3",
+    "torch": "2.11.0+cpu",
+    "device": "cpu"
+  },
+  "notes": [
+    "Seeded Python/NumPy/PyTorch, deterministic algorithms requested (warn_only), cuDNN benchmark off, CPU threads fixed to torch_threads; batch order from a NumPy generator seeded with seed + epoch.",
+    "Reproducibility is expected only for the same machine, PyTorch version and device; GPU kernels and other CPU architectures can give different results."
+  ]
+}

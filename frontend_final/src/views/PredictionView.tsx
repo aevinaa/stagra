@@ -1,19 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import { useCallback, useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { DataNotice, ApiErrorNotice } from '../components/common/DataNotice';
 import {
   getCurrentConditions,
   getHistoricalReadings,
   getPrediction,
+  getRawSensorForecast,
 } from '../services/api';
-import {
+import type {
   CurrentConditions,
   HistoricalReading,
   AirQualityPrediction,
-  AirQualityLevel,
 } from '../types';
 import { PredictionTrendChart } from '../components/prediction/PredictionTrendChart';
 import { RefreshCw, Activity } from 'lucide-react';
+import type { RawSensorForecast } from '../services/api';
 
 type LoadState = 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -21,37 +23,47 @@ export function PredictionView() {
   const [conditions, setConditions] = useState<CurrentConditions | null>(null);
   const [prediction, setPrediction] = useState<AirQualityPrediction | null>(null);
   const [history, setHistory] = useState<HistoricalReading[]>([]);
+  const [rawForecast, setRawForecast] = useState<RawSensorForecast | null>(null);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     setIsRefreshing(true);
-    try {
-      // The prediction is checked first: when none exists (real mode, no trained and
-      // evaluated model yet) nothing else on this page is shown.
-      const pred = await getPrediction();
-      if (!pred) {
-        setPrediction(null);
-        setConditions(null);
-        setHistory([]);
-        setLoadError(null);
-        setLoadState('unavailable');
-        return;
-      }
 
-      const [cur, hist] = await Promise.all([
-        getCurrentConditions(),
-        getHistoricalReadings('6h'),
+    try {
+      const forecastPromise = getRawSensorForecast().catch((error) => {
+        console.error('Raw sensor forecast request failed:', error);
+        return null;
+      });
+
+      const predictionPromise = getPrediction().catch(() => null);
+
+      const conditionsPromise = getCurrentConditions().catch(() => null);
+
+      const historyPromise = getHistoricalReadings('6h').catch(() => null);
+
+      const [forecast, pred, cur, hist] = await Promise.all([
+        forecastPromise,
+        predictionPromise,
+        conditionsPromise,
+        historyPromise,
       ]);
+
+      setRawForecast(forecast);
       setPrediction(pred);
       setConditions(cur);
-      setHistory(hist.readings);
+      setHistory(hist?.readings ?? []);
       setLoadError(null);
-      setLoadState('ready');
-    } catch (err) {
-      console.error('Failed to load prediction data:', err);
-      setLoadError(err);
+
+      if (cur || forecast || pred) {
+        setLoadState('ready');
+      } else {
+        setLoadState('unavailable');
+      }
+    } catch (error) {
+      console.error('Failed to load prediction page:', error);
+      setLoadError(error);
       setLoadState('error');
     } finally {
       setIsRefreshing(false);
@@ -59,320 +71,304 @@ export function PredictionView() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
-  if (loadState === 'loading') {
-    return (
-      <div className="py-24 text-center">
-        <p className="type-body text-[#607780] font-mono">Loading telemetry and prediction model output...</p>
-      </div>
-    );
-  }
+  const formatValue = (value: number | null | undefined) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? value.toFixed(2)
+      : '—';
 
-  // Predefined status styling matching new design tokens (demo forecast levels only)
-  const getLevelStyle = (level: AirQualityLevel) => {
-    switch (level) {
-      case 'Low':
-        return {
-          bg: 'bg-[#EEF8F2]',
-          text: 'text-[#27845A]',
-          border: 'border-[#D5E0E4]',
-          label: 'LOW',
-        };
-      case 'Moderate':
-        return {
-          bg: 'bg-[#FFF8E8]',
-          text: 'text-[#C47A13]',
-          border: 'border-[#D5E0E4]',
-          label: 'MODERATE',
-        };
-      case 'High':
-        return {
-          bg: 'bg-[#FDF0F0]',
-          text: 'text-[#C94343]',
-          border: 'border-[#D5E0E4]',
-          label: 'HIGH',
-        };
-      default:
-        return {
-          bg: 'bg-[#E8F0F2]',
-          text: 'text-[#607780]',
-          border: 'border-[#D5E0E4]',
-          label: String(level).toUpperCase(),
-        };
-    }
+  const ageLabel = (seconds: number | undefined) => {
+    if (seconds === undefined || !Number.isFinite(seconds)) return 'Unknown';
+
+    if (seconds < 60) return `${Math.round(seconds)} seconds`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)} minutes`;
+
+    return `${(seconds / 3600).toFixed(1)} hours`;
   };
 
-  const isReady = loadState === 'ready' && conditions && prediction;
+  const isForecastStale = rawForecast?.status === 'stale';
 
   return (
     <div className="space-y-6">
-      {/* PAGE HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#D5E0E4]">
         <div>
           <h2 className="type-page-title text-[#19323C]">Prediction</h2>
-          <p className="type-body text-[#607780] mt-0.5">
-            {isReady
-              ? 'Short-term forecasting and sequential model inference (demo data, not a real model).'
-              : 'Short-term forecasting and sequential model inference.'}
+          <p className="type-body text-[#607780] mt-1">
+            Real sensor trend estimates and separately labelled demo predictions.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* DEMO / MOCK NOTICE BADGE (only when demo predictions are being shown) */}
-          {isReady && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#E8F2F6] border border-[#D5E0E4] text-xs font-mono text-[#176B87]">
-              <span className="w-2 h-2 rounded-full bg-[#176B87]" />
-              <span className="font-semibold uppercase tracking-wider">Demo Forecast / Mock Prediction</span>
-            </div>
-          )}
-
-          <button
-            onClick={loadData}
-            disabled={isRefreshing}
-            className="p-1.5 rounded-[8px] border border-[#D5E0E4] bg-[#FAFCFC] hover:bg-[#E8F0F2] text-[#607780] hover:text-[#19323C] transition-colors cursor-pointer disabled:opacity-50"
-            title="Refresh prediction model"
-            aria-label="Refresh prediction model"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#176B87]' : ''}`} />
-          </button>
-        </div>
+        <button
+          onClick={() => void loadData()}
+          disabled={isRefreshing}
+          className="self-start p-2 rounded-lg border border-[#D5E0E4] hover:bg-[#E8F0F2] disabled:opacity-50"
+          title="Refresh forecast"
+          aria-label="Refresh forecast"
+        >
+          <RefreshCw
+            className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+          />
+        </button>
       </div>
 
+      {loadState === 'loading' && (
+        <p className="text-sm text-[#607780]">Loading sensor data and forecasts...</p>
+      )}
+
+      {loadState === 'error' && (
+        <ApiErrorNotice error={loadError} onRetry={() => void loadData()} />
+      )}
+
       {loadState === 'unavailable' && (
-        <DataNotice variant="unavailable" title="Prediction unavailable">
-          No prediction model has been trained and evaluated on held-out real sensor data yet, so no
-          forecast is shown. The MQ135 value is a raw, uncalibrated sensor reading, and no air-quality
-          level is derived from it.
+        <DataNotice variant="unavailable" title="Sensor forecast unavailable">
+          No current sensor reading or forecast could be loaded. Check that the
+          backend is running and has stored readings.
         </DataNotice>
       )}
 
-      {loadState === 'error' && <ApiErrorNotice error={loadError} onRetry={loadData} />}
+      {/* Real backend forecast: raw MQ135 units, not AQI */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D5E0E4] pb-2">
+          <h3 className="text-xs uppercase font-mono tracking-wider font-bold text-[#19323C]">
+            Real MQ135 Sensor Forecast
+          </h3>
 
-      {isReady && conditions && prediction && (
-        <>
-          {/* SECTION 1: OBSERVED SENSOR DATA */}
-          <section aria-labelledby="observed-data-heading" className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#D5E0E4] pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#176B87]" />
-                <h3 id="observed-data-heading" className="text-xs uppercase font-mono tracking-wider font-bold text-[#19323C]">
-                  OBSERVED SENSOR DATA
-                </h3>
-              </div>
-              <span className="text-[11px] font-mono text-[#176B87] bg-[#E8F2F6] px-2 py-0.5 rounded border border-[#D5E0E4]">
-                Ground Truth Telemetry
-              </span>
-            </div>
+          <span className="text-xs font-mono px-2 py-1 rounded border border-[#D5E0E4] bg-[#E8F2F6] text-[#176B87]">
+            Backend forecast
+          </span>
+        </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Temperature */}
-              <Card className="p-4 flex flex-col justify-between">
-                <span className="text-[11px] uppercase tracking-wider text-[#607780] font-mono block">
-                  Temperature
-                </span>
-                <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-mono font-bold text-[#19323C] tabular-nums">
-                    {conditions.temperature.toFixed(1)}
-                  </span>
-                  <span className="text-xs font-mono text-[#607780]">°C</span>
-                </div>
-                <div className="mt-2 pt-2 border-t border-[#D5E0E4] text-[10px] font-mono text-[#8A98A8]">
-                  Sensor: DS18B20
-                </div>
+        {!rawForecast ? (
+          <DataNotice variant="unavailable" title="No real forecast available">
+            The forecast endpoint did not return usable data. Check the backend
+            endpoint and browser console. Demo predictions, if present below,
+            are separate from this result.
+          </DataNotice>
+        ) : (
+          <>
+            {isForecastStale && (
+              <DataNotice variant="unavailable" title="Sensor data is stale">
+                The latest stored reading is approximately{' '}
+                {ageLabel(rawForecast.data_age_seconds)} old. These forecast
+                values describe an estimate based on old data, not current
+                environmental conditions.
+              </DataNotice>
+            )}
+
+            {rawForecast.status === 'no_data' && (
+              <DataNotice variant="unavailable" title="No stored sensor data">
+                The backend has no sensor readings to forecast from.
+              </DataNotice>
+            )}
+
+            {rawForecast.status === 'insufficient_history' && (
+              <DataNotice variant="unavailable" title="Not enough history">
+                More sensor readings are needed to calculate the trend.
+              </DataNotice>
+            )}
+
+            {rawForecast.status === 'invalid_data' && (
+              <DataNotice variant="unavailable" title="Invalid sensor data">
+                The backend could not calculate a reliable forecast from the
+                available readings.
+              </DataNotice>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="p-4">
+                <p className="text-xs uppercase font-mono text-[#607780]">
+                  Latest MQ135 reading
+                </p>
+                <p className="text-2xl font-mono font-bold text-[#19323C] mt-2">
+                  {formatValue(conditions?.mq135)}
+                </p>
+                <p className="text-xs text-[#607780] mt-2">
+                  Raw sensor units · uncalibrated
+                </p>
               </Card>
 
-              {/* Humidity */}
-              <Card className="p-4 flex flex-col justify-between">
-                <span className="text-[11px] uppercase tracking-wider text-[#607780] font-mono block">
-                  Humidity
-                </span>
-                <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-mono font-bold text-[#19323C] tabular-nums">
-                    {conditions.humidity.toFixed(1)}
-                  </span>
-                  <span className="text-xs font-mono text-[#607780]">% RH</span>
-                </div>
-                <div className="mt-2 pt-2 border-t border-[#D5E0E4] text-[10px] font-mono text-[#8A98A8]">
-                  Sensor: DHT11
-                </div>
+              <Card className="p-4">
+                <p className="text-xs uppercase font-mono text-[#607780]">
+                  Persistence estimate
+                </p>
+                <p className="text-2xl font-mono font-bold text-[#19323C] mt-2">
+                  {formatValue(rawForecast.persistence_forecast)}
+                </p>
+                <p className="text-xs text-[#607780] mt-2">
+                  Assumes the reading stays near its latest value
+                </p>
               </Card>
 
-              {/* MQ135 Reading */}
-              <Card className="p-4 flex flex-col justify-between">
-                <span className="text-[11px] uppercase tracking-wider text-[#607780] font-mono block">
-                  MQ135
-                </span>
-                <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-mono font-bold text-[#19323C] tabular-nums">
-                    {Number.isInteger(conditions.mq135) ? conditions.mq135 : conditions.mq135.toFixed(1)}
-                  </span>
-                  <span className="text-xs font-mono text-[#607780]">raw units</span>
-                </div>
-                <div className="mt-2 pt-2 border-t border-[#D5E0E4] text-[10px] font-mono text-[#8A98A8]">
-                  Raw value (uncalibrated)
-                </div>
-              </Card>
-
-              {/* Data Source */}
-              <Card className="p-4 flex flex-col justify-between border-l-4 border-l-[#176B87]">
-                <span className="text-[11px] uppercase tracking-wider text-[#607780] font-mono block">
-                  Data Source
-                </span>
-                <div className="mt-2">
-                  <span className="text-xs font-mono font-bold text-[#19323C] break-all">
-                    {conditions.experimentId ?? 'Browser-generated demo'}
-                  </span>
-                </div>
-                <div className="mt-2 pt-2 border-t border-[#D5E0E4] text-[10px] font-mono text-[#8A98A8]">
-                  {conditions.isSynthetic ? 'Synthetic data' : 'Latest stored reading'}
-                </div>
+              <Card className="p-4">
+                <p className="text-xs uppercase font-mono text-[#607780]">
+                  Linear trend estimate
+                </p>
+                <p className="text-2xl font-mono font-bold text-[#19323C] mt-2">
+                  {formatValue(rawForecast.linear_trend_forecast)}
+                </p>
+                <p className="text-xs text-[#607780] mt-2">
+                  Trend-based estimate in raw sensor units
+                </p>
               </Card>
             </div>
-          </section>
 
-          {/* SECTION 2: MODEL PREDICTION (FORECAST TIMELINE) */}
-          <section aria-labelledby="model-prediction-heading" className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#D5E0E4] pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C47A13]" />
-                <h3 id="model-prediction-heading" className="text-xs uppercase font-mono tracking-wider font-bold text-[#19323C]">
-                  MODEL PREDICTION
-                </h3>
-              </div>
-              <span className="text-[11px] font-mono text-[#C47A13] bg-[#FFF8E8] px-2.5 py-0.5 rounded border border-[#D5E0E4] font-semibold">
-                Demo Forecast / Mock Prediction
-              </span>
-            </div>
-
-            {/* Forecast Points: Current, +5 minutes, +10 minutes, +15 minutes */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {prediction.forecast.map((step) => {
-                const stepStyle = getLevelStyle(step.airQuality);
-                const isNow = step.minutesAhead === 0;
-
-                return (
-                  <Card
-                    key={step.minutesAhead}
-                    className={`p-4 flex flex-col justify-between ${
-                      isNow ? 'bg-[#FAFCFC]' : 'border-dashed border-[#D5E0E4] bg-[#FAFCFC]'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-mono text-xs font-bold text-[#19323C]">
-                          {step.label || (isNow ? 'Current' : `+${step.minutesAhead} minutes`)}
-                        </span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#E8F0F2] text-[#607780]">
-                          {isNow ? 'Observed Baseline' : 'Demo Forecast'}
-                        </span>
-                      </div>
-
-                      <div className="mt-3">
-                        <span className="text-[10px] font-mono text-[#8A98A8] block uppercase">
-                          Demo level (mock)
-                        </span>
-                        <span
-                          className={`inline-block mt-1 px-3 py-1 rounded-[5px] text-sm font-bold font-mono border ${stepStyle.bg} ${stepStyle.text} ${stepStyle.border}`}
-                        >
-                          {stepStyle.label}
-                        </span>
-                      </div>
-
-                      <div className="mt-3 flex items-baseline gap-1 text-xs font-mono text-[#607780]">
-                        <span>Projected MQ135:</span>
-                        <span className="font-semibold text-[#19323C]">
-                          {step.predictedMq135 ? Math.round(step.predictedMq135) : '—'}
-                        </span>
-                        <span className="text-[10px] text-[#8A98A8]">raw units</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 pt-2 border-t border-[#D5E0E4] text-[10px] font-mono text-[#8A98A8]">
-                      {isNow ? 'Empirical sensor baseline' : `Horizon: +${step.minutesAhead} minutes`}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* SECTION 3: MODEL PARAMETERS & RECOMMENDATION */}
-          <div>
-            <Card className="p-5 h-full flex flex-col justify-between" elevated={true}>
-              <div>
-                <div className="flex items-center justify-between pb-3 border-b border-[#D5E0E4] mb-4">
-                  <div>
-                    <h3 className="type-card-heading text-[#19323C]">
-                      Model Parameters & Status
-                    </h3>
-                    <p className="type-metadata text-[#607780] mt-0.5">
-                      Demo metadata (not from a real model)
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono text-[#176B87] bg-[#E8F2F6] px-2.5 py-1 rounded-[6px] border border-[#D5E0E4]">
-                    Model: {prediction.modelUsed}
-                  </span>
-                </div>
-
-                {/* Grid of Key Model Attributes */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                  {/* Model Used */}
-                  <div className="p-3 rounded-[6px] bg-[#E8F0F2] border border-[#D5E0E4]">
-                    <span className="text-[10px] text-[#8A98A8] block uppercase">Model Used</span>
-                    <span className="font-bold text-[#19323C] text-sm mt-0.5 block">
-                      {prediction.modelUsed}
-                    </span>
-                    <span className="text-[10px] text-[#607780]">Sequential Model</span>
-                  </div>
-
-                  {/* Prediction Confidence */}
-                  <div className="p-3 rounded-[6px] bg-[#E8F0F2] border border-[#D5E0E4]">
-                    <span className="text-[10px] text-[#8A98A8] block uppercase">Prediction Confidence</span>
-                    <span className="font-bold text-[#19323C] text-sm mt-0.5 block">
-                      {Math.round(prediction.confidence * 100)}%
-                    </span>
-                    <span className="text-[10px] text-[#27845A]">Confidence Score</span>
-                  </div>
-
-                  {/* Trend */}
-                  <div className="p-3 rounded-[6px] bg-[#E8F0F2] border border-[#D5E0E4]">
-                    <span className="text-[10px] text-[#8A98A8] block uppercase">Trend</span>
-                    <span className={`font-bold text-sm mt-0.5 block ${prediction.trend === 'Worsening' || prediction.trend === 'Increasing' ? 'text-[#C94343]' : 'text-[#27845A]'}`}>
-                      {prediction.trend}
-                    </span>
-                    <span className="text-[10px] text-[#607780]">Predicted Trajectory</span>
-                  </div>
-
-                  {/* Forecast Horizon */}
-                  <div className="p-3 rounded-[6px] bg-[#E8F0F2] border border-[#D5E0E4]">
-                    <span className="text-[10px] text-[#8A98A8] block uppercase">Forecast Horizon</span>
-                    <span className="font-bold text-[#19323C] text-sm mt-0.5 block">
-                      +{prediction.predictionHorizonMinutes} minutes
-                    </span>
-                    <span className="text-[10px] text-[#607780]">Lookahead Window</span>
-                  </div>
-                </div>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="w-4 h-4 text-[#176B87]" />
+                <h4 className="font-semibold text-[#19323C]">
+                  Forecast metadata
+                </h4>
               </div>
 
-              {/* Recommendation */}
-              <div className="mt-4 pt-3 border-t border-[#D5E0E4] flex items-start gap-3 bg-[#E8F0F2] p-3 rounded-[6px] border border-[#D5E0E4]">
-                <Activity className="w-4 h-4 text-[#C47A13] shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <span className="font-bold text-[#19323C] uppercase tracking-wide">
-                    Recommendation:{' '}
-                  </span>
-                  <span className="text-[#19323C] font-medium">{prediction.recommendation}</span>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-[#607780]">Status</dt>
+                  <dd className="font-mono font-semibold text-[#19323C]">
+                    {rawForecast.status}
+                  </dd>
                 </div>
-              </div>
+
+                <div>
+                  <dt className="text-[#607780]">Experiment</dt>
+                  <dd className="font-mono text-[#19323C]">
+                    {rawForecast.experiment_id ?? '—'}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-[#607780]">Data age</dt>
+                  <dd className="font-mono text-[#19323C]">
+                    {ageLabel(rawForecast.data_age_seconds)}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-[#607780]">Forecast horizon</dt>
+                  <dd className="font-mono text-[#19323C]">
+                    {rawForecast.forecast_horizon_seconds != null
+                      ? `${rawForecast.forecast_horizon_seconds} seconds`
+                      : '—'}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-[#607780]">Readings used</dt>
+                  <dd className="font-mono text-[#19323C]">
+                    {rawForecast.lookback_readings ?? '—'}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-[#607780]">Trend rate</dt>
+                  <dd className="font-mono text-[#19323C]">
+                    {formatValue(rawForecast.trend_per_minute)} raw units/min
+                  </dd>
+                </div>
+              </dl>
+
+              {rawForecast.message && (
+                <p className="mt-3 text-sm text-[#607780]">
+                  {rawForecast.message}
+                </p>
+              )}
+
+              <p className="mt-4 pt-3 border-t border-[#D5E0E4] text-xs text-[#607780]">
+                These estimates are not AQI or gas concentration measurements.
+                The MQ135 reading is uncalibrated, and this trend estimate is
+                not a validated health-risk prediction.
+              </p>
+            </Card>
+          </>
+        )}
+      </section>
+
+      {/* Current conditions */}
+      {conditions && (
+        <section className="space-y-3">
+          <h3 className="text-xs uppercase font-mono tracking-wider font-bold text-[#19323C] border-b border-[#D5E0E4] pb-2">
+            Current Stored Conditions
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="p-4">
+              <p className="text-xs uppercase font-mono text-[#607780]">Temperature</p>
+              <p className="text-2xl font-mono font-bold text-[#19323C] mt-2">
+                {conditions.temperature.toFixed(1)} °C
+              </p>
+            </Card>
+
+            <Card className="p-4">
+              <p className="text-xs uppercase font-mono text-[#607780]">Humidity</p>
+              <p className="text-2xl font-mono font-bold text-[#19323C] mt-2">
+                {conditions.humidity.toFixed(1)}%
+              </p>
+            </Card>
+
+            <Card className="p-4">
+              <p className="text-xs uppercase font-mono text-[#607780]">Experiment</p>
+              <p className="text-lg font-mono font-bold text-[#19323C] mt-2 break-all">
+                {conditions.experimentId ?? '—'}
+              </p>
             </Card>
           </div>
+        </section>
+      )}
 
-          {/* SECTION 4: DEMARCATED TREND CHART (OBSERVED VS PREDICTED) */}
-          <section aria-labelledby="chart-section-heading">
-            <PredictionTrendChart history={history} prediction={prediction} />
+      {/* Existing prediction is shown only when the API supplies one */}
+      {prediction && (
+        <>
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D5E0E4] pb-2">
+              <h3 className="text-xs uppercase font-mono tracking-wider font-bold text-[#19323C]">
+                Demo Prediction
+              </h3>
+              <span className="text-xs font-mono px-2 py-1 rounded border border-[#D5E0E4] bg-[#FFF8E8] text-[#C47A13]">
+                Mock data · not a trained model
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {prediction.forecast.map((step) => (
+                <Card key={step.minutesAhead} className="p-4">
+                  <p className="text-xs font-mono text-[#607780]">
+                    {step.label ||
+                      (step.minutesAhead === 0
+                        ? 'Current'
+                        : `+${step.minutesAhead} minutes`)}
+                  </p>
+                  <p className="text-lg font-bold text-[#19323C] mt-2">
+                    {step.airQuality}
+                  </p>
+                  <p className="text-xs text-[#607780] mt-2">
+                    Demo level · mock data
+                  </p>
+                  <p className="text-sm font-mono text-[#19323C] mt-2">
+                    MQ135: {formatValue(step.predictedMq135)} raw units
+                  </p>
+                </Card>
+              ))}
+            </div>
           </section>
+
+          <Card className="p-5">
+            <h3 className="font-semibold text-[#19323C]">Demo Model Metadata</h3>
+            <p className="text-sm text-[#607780] mt-2">
+              Model: {prediction.modelUsed} · Confidence:{' '}
+              {Math.round(prediction.confidence * 100)}% · Horizon:{' '}
+              {prediction.predictionHorizonMinutes} minutes
+            </p>
+            <p className="text-sm text-[#607780] mt-2">
+              These values belong to the existing demo prediction and are not
+              confidence estimates for the real sensor forecast.
+            </p>
+            <p className="text-sm text-[#19323C] mt-3">
+              Recommendation: {prediction.recommendation}
+            </p>
+          </Card>
+
+          <PredictionTrendChart history={history} prediction={prediction} />
         </>
       )}
     </div>

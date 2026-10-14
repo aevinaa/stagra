@@ -573,8 +573,6 @@ def test_original_routes_still_exist_with_their_original_behaviour(env):
     paths = env.client.get("/openapi.json").json()["paths"]
     assert {"/api/readings", "/api/current", "/api/history"} <= set(paths)
     assert {"/api/telemetry/current", "/api/telemetry/history", "/api/system/status"} <= set(paths)
-    assert not any("prediction" in p or "models" in p for p in paths)  # later phases
-
     assert env.client.get("/api/current").status_code == 404
     assert env.client.get("/api/current").json() == {"detail": "No readings stored yet"}
     assert env.client.get("/api/history").json() == []

@@ -1,0 +1,43 @@
+{
+  "schema": "airq.sequence_scaler",
+  "version": 1,
+  "feature_names": [
+    "temperature_c",
+    "humidity_percent",
+    "mq135_raw"
+  ],
+  "target_column": "mq135_raw",
+  "interval_seconds": 5,
+  "history_steps": 120,
+  "horizon_steps": 120,
+  "channels": {
+    "temperature_c": {
+      "mean": 27.955041562716165,
+      "std": 0.9347780059860742,
+      "scale": 0.9347780059860742,
+      "zero_variance": false
+    },
+    "humidity_percent": {
+      "mean": 63.422125012079874,
+      "std": 9.130731524671774,
+      "scale": 9.130731524671774,
+      "zero_variance": false
+    },
+    "mq135_raw": {
+      "mean": 260.6695833333333,
+      "std": 36.20990587062776,
+      "scale": 36.20990587062776,
+      "zero_variance": false
+    }
+  },
+  "fit": {
+    "experiments": [
+      "HW-002",
+      "HW-003"
+    ],
+    "synthetic_experiments": [],
+    "n_windows": 962,
+    "n_window_samples": 115440,
+    "n_observations": 1200
+  }
+}
