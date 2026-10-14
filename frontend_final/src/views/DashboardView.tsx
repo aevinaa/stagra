@@ -7,9 +7,11 @@ import {
   getHistoricalReadings,
   getPrediction,
   getDecisionSupport,
+  getRawSensorForecast,
   isApiError,
   IS_MOCK_MODE,
 } from '../services/api';
+import type { RawSensorForecast } from '../services/api';
 import {
   CurrentConditions,
   HistoryResult,
@@ -79,16 +81,18 @@ export function DashboardView() {
   const [secondsAgo, setSecondsAgo] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [decisionSupport, setDecisionSupport] = useState<DecisionSupport | null>(null);
+  const [rawForecast, setRawForecast] = useState<RawSensorForecast | null>(null);
 
 
   // Fetch telemetry from API layer
   const loadDashboardData = useCallback(async () => {
     setIsRefreshing(true);
-    const [cur, hist, pred, assessment] = await Promise.allSettled([
+    const [cur, hist, pred, assessment, forecast] = await Promise.allSettled([
       getCurrentConditions(),
       getHistoricalReadings('24h'),
       getPrediction(),
       getDecisionSupport(),
+      getRawSensorForecast(),
     ]);
 
     if (hist.status === 'fulfilled') {
@@ -101,8 +105,8 @@ export function DashboardView() {
     }
 
     setPrediction(pred.status === 'fulfilled' ? pred.value : null);
-    setDecisionSupport(assessment.status === 'fulfilled' ? assessment.value : null,
-    );
+    setDecisionSupport(assessment.status === 'fulfilled' ? assessment.value : null);
+    setRawForecast(forecast.status === 'fulfilled' ? forecast.value : null);
 
     if (cur.status === 'fulfilled') {
       setConditions(cur.value);
@@ -186,6 +190,7 @@ export function DashboardView() {
           prediction={prediction}
           onRetry={loadDashboardData}
           decisionSupport={decisionSupport}
+          rawForecast={rawForecast}
         />
       ) : (
         <ApiErrorNotice error={loadError} onRetry={loadDashboardData} />
@@ -200,6 +205,7 @@ interface DashboardContentProps {
   historyError: unknown;
   prediction: AirQualityPrediction | null;
   decisionSupport: DecisionSupport | null;
+  rawForecast: RawSensorForecast | null;
   onRetry: () => void;
 }
 
@@ -209,6 +215,7 @@ function DashboardContent({
   historyError,
   prediction,
   decisionSupport,
+  rawForecast,
   onRetry,
 }: DashboardContentProps) {
   // Temperature baseline assessment (Displayed Target: 20.0–25.0 °C)
@@ -537,10 +544,65 @@ function DashboardContent({
                 </div>
               </div>
             </Card>
+          ) : rawForecast &&
+            (rawForecast.status === 'ok' || rawForecast.status === 'stale') &&
+            (typeof rawForecast.persistence_forecast === 'number' ||
+              typeof rawForecast.linear_trend_forecast === 'number') ? (
+            <Card className="p-5 h-full flex flex-col justify-between">
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div>
+                    <h3 className="type-card-heading text-[#19323C]">Real MQ135 Sensor Forecast</h3>
+                    <p className="type-metadata text-[#607780] mt-1">
+                      {rawForecast.forecast_horizon_seconds ?? 60}-second forecast · raw sensor units
+                    </p>
+                  </div>
+                  <span className={`text-[11px] font-mono px-2.5 py-1 rounded-[6px] border font-semibold self-start ${
+                    rawForecast.status === 'stale'
+                      ? 'text-[#C47A13] bg-[#FFF8E8] border-[#E7C98A]'
+                      : 'text-[#27845A] bg-[#EEF8F2] border-[#D5E0E4]'
+                  }`}>
+                    {rawForecast.status === 'stale' ? 'STALE DATA' : 'LIVE DATA'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                  <div className="p-4 rounded-[8px] bg-[#E8F0F2] border border-[#D5E0E4]">
+                    <p className="type-metadata text-[#607780]">Persistence estimate</p>
+                    <p className="text-2xl font-semibold font-mono text-[#19323C] mt-1">
+                      {typeof rawForecast.persistence_forecast === 'number'
+                        ? formatRaw(rawForecast.persistence_forecast)
+                        : '—'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-[8px] bg-[#E8F0F2] border border-[#D5E0E4]">
+                    <p className="type-metadata text-[#607780]">Linear-trend estimate</p>
+                    <p className="text-2xl font-semibold font-mono text-[#19323C] mt-1">
+                      {typeof rawForecast.linear_trend_forecast === 'number'
+                        ? formatRaw(rawForecast.linear_trend_forecast)
+                        : '—'}
+                    </p>
+                  </div>
+                </div>
+                <p className="type-metadata text-[#607780] mt-4">
+                  Based on {rawForecast.lookback_readings ?? 'available'} readings from experiment{' '}
+                  {rawForecast.experiment_id ?? '—'}. Latest reading age:{' '}
+                  {typeof rawForecast.data_age_seconds === 'number'
+                    ? `${Math.round(rawForecast.data_age_seconds)} seconds`
+                    : 'unknown'}.
+                </p>
+              </div>
+              <p className="text-xs text-[#607780] mt-4 pt-3 border-t border-[#D5E0E4]">
+                These estimates forecast the raw MQ135 sensor response, not AQI, ppm, or pollutant
+                concentration. The sensor is uncalibrated; this is not a validated health-risk prediction.
+                {rawForecast.status === 'stale' ? ' The latest reading is stale, so do not treat this as a live forecast.' : ''}
+              </p>
+            </Card>
           ) : (
-            <DataNotice variant="unavailable" title="Prediction unavailable" className="h-full">
-              No prediction model has been trained and evaluated on held-out real sensor data yet, so no
-              forecast is shown. The MQ135 value above is a raw, uncalibrated sensor reading.
+            <DataNotice variant="unavailable" title="Real sensor forecast unavailable" className="h-full">
+              {rawForecast?.message ??
+                'No usable raw MQ135 forecast is available yet. Check that the backend is running and that enough readings have been stored.'}
+              {' '}The MQ135 value is a raw, uncalibrated sensor reading, not AQI or pollutant concentration.
             </DataNotice>
           )}
         </div>
