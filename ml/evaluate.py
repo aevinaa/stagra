@@ -486,7 +486,8 @@ def main(argv=None) -> int:
         seq = build_sequences(
             df, f"{int(d['history_seconds'])}s", f"{int(d['horizon_seconds'])}s",
             stride=None if stride_steps == 1 else f"{stride_steps * interval}s",
-            interval_seconds=interval, exclude_imputed=args.exclude_imputed,
+            interval_seconds=interval, input_columns=d["feature_names"],
+            exclude_imputed=args.exclude_imputed,
         )
         split = split_by_experiment(
             seq, train_fraction=args.train_fraction, val_fraction=args.val_fraction,

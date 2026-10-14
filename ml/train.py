@@ -562,6 +562,8 @@ def _parse_args(argv):
     g.add_argument("--stride", default=None, help="e.g. 1min (default: every sample)")
     g.add_argument("--interval-seconds", type=int, default=None, help="sampling interval (default: inferred)")
     g.add_argument("--exclude-imputed", action="store_true", help="drop windows with interpolated values (all splits)")
+    g.add_argument("--sensor-only", action="store_true",
+                   help="use only temperature_c, humidity_percent and mq135_raw; recommended when context was not recorded")
     g.add_argument("--train-fraction", type=float, default=0.6)
     g.add_argument("--val-fraction", type=float, default=0.2)
     g.add_argument("--test-fraction", type=float, default=0.2)
@@ -598,9 +600,11 @@ def main(argv=None) -> int:
             patience=args.patience, min_delta=args.min_delta, grad_clip=args.grad_clip, device=args.device,
         )
         df = load_clean_csv(args.clean_csv)
+        input_columns = ("temperature_c", "humidity_percent", "mq135_raw") if args.sensor_only else None
         seq = build_sequences(
             df, args.history, args.horizon, stride=args.stride,
-            interval_seconds=args.interval_seconds, exclude_imputed=args.exclude_imputed,
+            interval_seconds=args.interval_seconds, input_columns=input_columns,
+            exclude_imputed=args.exclude_imputed,
         )
         split = split_by_experiment(
             seq, train_fraction=args.train_fraction, val_fraction=args.val_fraction,
